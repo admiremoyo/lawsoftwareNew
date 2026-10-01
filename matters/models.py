@@ -1,3 +1,4 @@
+from datetime import timedelta
 from decimal import Decimal
 
 from django.conf import settings
@@ -87,6 +88,15 @@ class Matter(models.Model):
         return self.disbursements.filter(invoice__isnull=True).aggregate(t=Sum("amount"))["t"] or Decimal("0")
 
     @property
+    def tasks_done(self):
+        return self.tasks.filter(done=True).count()
+
+    @property
+    def checklist_percent(self):
+        total = self.tasks.count()
+        return round(100 * self.tasks_done / total) if total else 0
+
+    @property
     def outstanding(self):
         return sum((inv.balance for inv in self.invoices.exclude(status__in=["draft", "void"])), Decimal("0"))
 
@@ -139,3 +149,58 @@ class DocumentTemplate(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class WorkflowTemplate(models.Model):
+    """A checklist of standard steps, e.g. for a property transfer or a deceased estate."""
+
+    name = models.CharField(max_length=200)
+    matter_type = models.CharField(max_length=20, choices=[("", "Any")] + Matter.TYPE_CHOICES, blank=True)
+    auto_apply = models.BooleanField(
+        default=True, help_text="Add these steps automatically when a matter of this type is opened.")
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+    def apply_to(self, matter):
+        start = matter.date_opened
+        existing = matter.tasks.count()
+        for i, step in enumerate(self.steps.all(), start=existing + 1):
+            MatterTask.objects.create(
+                matter=matter, title=step.title, order=i, workflow=self.name,
+                due_date=start + timedelta(days=step.due_after_days) if step.due_after_days is not None else None,
+            )
+
+
+class WorkflowStep(models.Model):
+    template = models.ForeignKey(WorkflowTemplate, on_delete=models.CASCADE, related_name="steps")
+    order = models.PositiveIntegerField(default=0)
+    title = models.CharField(max_length=300)
+    due_after_days = models.PositiveIntegerField(
+        null=True, blank=True, help_text="Days after the matter is opened that this step is due.")
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.title
+
+
+class MatterTask(models.Model):
+    matter = models.ForeignKey(Matter, on_delete=models.CASCADE, related_name="tasks")
+    title = models.CharField(max_length=300)
+    order = models.PositiveIntegerField(default=0)
+    workflow = models.CharField(max_length=200, blank=True)
+    due_date = models.DateField(null=True, blank=True)
+    done = models.BooleanField(default=False)
+    done_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+    done_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["order", "id"]
+
+    def __str__(self):
+        return self.title

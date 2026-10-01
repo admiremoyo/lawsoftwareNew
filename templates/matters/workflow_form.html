@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Workflow{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 960px"><div class="card-body">
+<h4 class="mb-3">{% if workflow.pk %}Edit {{ workflow.name }}{% else %}New workflow{% endif %}</h4>
+<form method="post">{% csrf_token %}
+  <div class="row g-3 mb-3">
+    <div class="col-md-6">{% include "_field.html" with field=form.name %}</div>
+    <div class="col-md-4">{% include "_field.html" with field=form.matter_type %}</div>
+    <div class="col-md-2 pt-4"><div class="form-check">{{ form.auto_apply }} <label class="form-check-label" for="{{ form.auto_apply.id_for_label }}">Automatic</label></div></div>
+  </div>
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+  <table class="table table-sm align-middle">
+    <thead><tr><th style="width:6rem">Order</th><th>Step</th><th style="width:10rem">Due after (days)</th><th style="width:5rem">Remove</th></tr></thead>
+    <tbody>{% for f in formset %}<tr>{% for h in f.hidden_fields %}{{ h }}{% endfor %}
+      <td>{{ f.order }}</td><td>{{ f.title }}{% for e in f.title.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}</td><td>{{ f.due_after_days }}</td><td class="text-center">{{ f.DELETE }}</td></tr>{% endfor %}</tbody>
+  </table>
+  <p class="small text-secondary">Need more rows? Save, and three empty rows will be added again.</p>
+  <button class="btn btn-primary">Save</button> <a class="btn btn-link" href="{% url 'workflow_list' %}">Cancel</a>
+</form>
+</div></div>
+{% endblock %}

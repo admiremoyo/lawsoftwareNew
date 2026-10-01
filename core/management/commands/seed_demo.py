@@ -76,6 +76,15 @@ class Command(BaseCommand):
         m4 = Matter.objects.create(client=acme, description="Debt collection – Gamma Stores", matter_type="collections",
                                    responsible=assoc, date_opened=today - timedelta(days=10))
 
+        from matters.models import WorkflowTemplate
+
+        for matter, done in [(m1, 4), (m2, 3), (m3, 5), (m4, 1)]:
+            for workflow in WorkflowTemplate.objects.filter(matter_type=matter.matter_type):
+                workflow.apply_to(matter)
+            for task in matter.tasks.all()[:done]:
+                task.done, task.done_by, task.done_at = True, matter.responsible, timezone.now()
+                task.save()
+
         FileNote.objects.create(matter=m1, author=admin, date=today - timedelta(days=70),
                                 note="Consultation with client. Received contract and correspondence bundle.")
         FileNote.objects.create(matter=m1, author=admin, date=today - timedelta(days=40),

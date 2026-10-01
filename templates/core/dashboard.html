@@ -35,6 +35,13 @@
     {% endif %}
   </div>
   <div class="col-lg-6">
+    <div class="card mb-3"><div class="card-header bg-white fw-semibold">My checklist steps due (7 days)</div>
+      <ul class="list-group list-group-flush">
+      {% for t in steps_due %}
+        <li class="list-group-item d-flex justify-content-between"><span><a href="{{ t.matter.get_absolute_url }}?tab=checklist">{{ t.matter.file_number }}</a> {{ t.title }}</span>
+          <span class="small text-nowrap {% if t.due_date < today %}text-danger fw-semibold{% endif %}">{{ t.due_date|date:"d M" }}</span></li>
+      {% empty %}<li class="list-group-item text-secondary">Nothing due.</li>{% endfor %}
+      </ul></div>
     <div class="card mb-3"><div class="card-header bg-white fw-semibold">Prescription warnings (90 days)</div>
       <ul class="list-group list-group-flush">
       {% for m in prescribing %}

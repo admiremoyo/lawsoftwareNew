@@ -32,6 +32,7 @@
 
 <ul class="nav nav-tabs">
   <li class="nav-item"><a class="nav-link {% if tab == 'overview' %}active{% endif %}" href="?tab=overview">Overview</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'checklist' %}active{% endif %}" href="?tab=checklist">Checklist{% if tasks %} <span class="badge text-bg-light">{{ matter.tasks_done }}/{{ tasks|length }}</span>{% endif %}</a></li>
   <li class="nav-item"><a class="nav-link {% if tab == 'notes' %}active{% endif %}" href="?tab=notes">File notes</a></li>
   <li class="nav-item"><a class="nav-link {% if tab == 'time' %}active{% endif %}" href="?tab=time">Time</a></li>
   <li class="nav-item"><a class="nav-link {% if tab == 'disbursements' %}active{% endif %}" href="?tab=disbursements">Disbursements</a></li>
@@ -59,6 +60,27 @@
     </dl></div>
   </div>
   {% if matter.notes %}<h6>Notes</h6><p>{{ matter.notes|linebreaksbr }}</p>{% endif %}
+
+{% elif tab == 'checklist' %}
+  {% if tasks %}
+  <div class="progress mb-3" style="height: 8px"><div class="progress-bar bg-success" style="width: {{ matter.checklist_percent }}%"></div></div>
+  <table class="table table-sm align-middle">
+    <tbody>{% for t in tasks %}
+      <tr class="{% if t.done %}text-secondary{% endif %}">
+        <td style="width:2.5rem"><form method="post" action="{% url 'task_toggle' t.pk %}">{% csrf_token %}
+          <button class="btn btn-sm {% if t.done %}btn-success{% else %}btn-outline-secondary{% endif %}" title="Mark {% if t.done %}not {% endif %}done"><i class="bi bi-check-lg"></i></button></form></td>
+        <td class="{% if t.done %}text-decoration-line-through{% endif %}">{{ t.title }}{% if t.workflow %} <span class="small text-secondary">· {{ t.workflow }}</span>{% endif %}</td>
+        <td class="text-nowrap small">{% if t.done %}Done {{ t.done_at|date:"d M Y" }} by {{ t.done_by.get_full_name|default:t.done_by.username }}{% elif t.due_date %}<span class="{% if t.due_date < today %}text-danger fw-semibold{% endif %}">Due {{ t.due_date|date:"d M Y" }}</span>{% endif %}</td>
+        <td style="width:2rem"><form method="post" action="{% url 'task_delete' t.pk %}" onsubmit="return confirm('Remove this step?')">{% csrf_token %}<button class="btn btn-sm btn-link text-danger p-0"><i class="bi bi-x-lg"></i></button></form></td>
+      </tr>{% endfor %}</tbody></table>
+  {% else %}<p class="text-secondary">No checklist on this matter yet.</p>{% endif %}
+  <div class="row g-3 mt-1">
+    <div class="col-md-7"><form method="post" action="{% url 'task_add' matter.pk %}" class="d-flex gap-2">{% csrf_token %}
+      {{ task_form.title }}{{ task_form.due_date }}<button class="btn btn-primary text-nowrap">Add step</button></form></div>
+    <div class="col-md-5"><form method="post" action="{% url 'apply_workflow' matter.pk %}" class="d-flex gap-2">{% csrf_token %}
+      <select name="workflow" class="form-select">{% for w in workflows %}<option value="{{ w.pk }}" {% if w.matter_type == matter.matter_type %}selected{% endif %}>{{ w.name }}</option>{% endfor %}</select>
+      <button class="btn btn-outline-primary text-nowrap">Add checklist</button></form></div>
+  </div>
 
 {% elif tab == 'notes' %}
   <form method="post" action="{% url 'file_note_add' matter.pk %}" class="mb-4">{% csrf_token %}

@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Import data{% endblock %}
+{% block content %}
+<h4>Import data from your previous system</h4>
+<p class="text-secondary">Export clients and matters from your old system (or Excel) as CSV, match the column names to the template, and upload. You'll see a preview first – nothing is saved until you confirm, and nothing is saved at all if any row has a problem.</p>
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card"><div class="card-body">
+    <form method="post" enctype="multipart/form-data">{% csrf_token %}
+      <label class="form-label">What are you importing?</label>
+      <select name="kind" class="form-select mb-3">{% for k, label in kinds.items %}<option value="{{ k }}" {% if k == kind %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+      <label class="form-label">CSV file</label>
+      <input type="file" name="file" accept=".csv,text/csv" class="form-control mb-3" required>
+      <button class="btn btn-primary">Upload and preview</button>
+    </form>
+    <hr>
+    <p class="small mb-1">Templates (with an example row):</p>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'import_template' 'clients' %}">clients.csv</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'import_template' 'matters' %}">matters.csv</a>
+    <p class="small text-secondary mt-3 mb-0">Import clients first. In the matters file, <code>client</code> can be the client code, ID/registration number or exact name. <code>trust_opening_balance</code> posts a trust receipt "brought forward" on the matter – check it against your last trust reconciliation.</p>
+  </div></div></div>
+  <div class="col-lg-7">
+  {% if result %}
+    <div class="card"><div class="card-body">
+      {% if result.ok %}
+        <div class="alert alert-success">All {{ result.rows|length }} rows are valid.</div>
+        <form method="post">{% csrf_token %}<button class="btn btn-success" name="confirm" value="1">Import {{ result.rows|length }} {{ kind }} now</button></form>
+      {% else %}
+        <div class="alert alert-danger"><strong>{{ result.errors|length }} problem{{ result.errors|length|pluralize }} found – nothing was imported.</strong> Fix the file and upload it again.
+          <ul class="mb-0 mt-2 small">{% for e in result.errors|slice:":50" %}<li>{{ e }}</li>{% endfor %}</ul></div>
+      {% endif %}
+      <div class="table-responsive mt-3" style="max-height: 420px"><table class="table table-sm small">
+        <thead><tr><th>Line</th>{% for k in result.rows.0.data.keys %}<th>{{ k }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for r in result.rows|slice:":200" %}<tr class="{% if r.errors %}table-danger{% endif %}"><td>{{ r.line }}</td>{% for v in r.data.values %}<td>{{ v }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table></div>
+    </div></div>
+  {% endif %}
+  </div>
+</div>
+{% endblock %}

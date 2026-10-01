@@ -6,7 +6,7 @@ from django.db.models import Q
 from clients.models import Client
 from core.forms import DateInput, StyledFormMixin
 
-from .models import Document, DocumentTemplate, FileNote, Matter
+from .models import Document, DocumentTemplate, FileNote, Matter, MatterTask, WorkflowStep, WorkflowTemplate
 
 
 class MatterForm(StyledFormMixin, forms.ModelForm):
@@ -63,3 +63,26 @@ class DocumentTemplateForm(StyledFormMixin, forms.ModelForm):
 class GenerateDocumentForm(StyledFormMixin, forms.Form):
     template = forms.ModelChoiceField(queryset=DocumentTemplate.objects.all())
     save_to_matter = forms.BooleanField(required=False, initial=True, label="Also save a copy on the matter")
+
+
+class WorkflowTemplateForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = WorkflowTemplate
+        fields = ["name", "matter_type", "auto_apply"]
+
+
+class WorkflowStepForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = WorkflowStep
+        fields = ["order", "title", "due_after_days"]
+
+
+WorkflowStepFormSet = forms.inlineformset_factory(
+    WorkflowTemplate, WorkflowStep, form=WorkflowStepForm, extra=3, can_delete=True)
+
+
+class MatterTaskForm(StyledFormMixin, forms.ModelForm):
+    class Meta:
+        model = MatterTask
+        fields = ["title", "due_date"]
+        widgets = {"due_date": DateInput(), "title": forms.TextInput(attrs={"placeholder": "New step…"})}

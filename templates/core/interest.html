@@ -1,0 +1,31 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Interest calculator{% endblock %}
+{% block content %}
+<h4>Interest calculator</h4>
+<p class="text-secondary">Simple interest on a debt between two dates (365-day year).</p>
+<div class="row g-3">
+  <div class="col-lg-5"><div class="card"><div class="card-body">
+    <form>
+      <label class="form-label">Capital amount</label><input class="form-control mb-2" name="principal" value="{{ request.GET.principal }}" required>
+      <label class="form-label">Interest rate (% per year)</label><input class="form-control mb-2" name="rate" value="{{ request.GET.rate|default:'10' }}" required>
+      <div class="row g-2"><div class="col"><label class="form-label">From</label><input type="date" class="form-control" name="start" value="{{ request.GET.start }}" required></div>
+      <div class="col"><label class="form-label">To</label><input type="date" class="form-control" name="end" value="{{ request.GET.end|default:today|date:'Y-m-d' }}" required></div></div>
+      <div class="form-check mt-3"><input class="form-check-input" type="checkbox" name="in_duplum" id="dup" value="1" {% if request.GET.in_duplum or not request.GET.principal %}checked{% endif %}>
+        <label class="form-check-label" for="dup">Limit interest to the capital amount (in duplum rule)</label></div>
+      <button class="btn btn-primary mt-3">Calculate</button>
+    </form>
+  </div></div></div>
+  {% if result %}
+  <div class="col-lg-7"><div class="card"><div class="card-body">
+    <table class="table">
+      <tr><td>Capital</td><td class="num">{{ result.principal|money }}</td></tr>
+      <tr><td>Rate</td><td class="num">{{ result.rate }}% p.a. ({{ result.daily|money }} per day)</td></tr>
+      <tr><td>Period</td><td class="num">{{ result.start|date:"d M Y" }} – {{ result.end|date:"d M Y" }} ({{ result.days }} days)</td></tr>
+      <tr><td>Interest</td><td class="num">{{ result.interest|money }}{% if result.capped %} <span class="badge text-bg-warning">capped</span>{% endif %}</td></tr>
+      <tr class="fw-bold"><td>Total due</td><td class="num">{{ result.total|money }}</td></tr>
+    </table>
+    <p class="small text-secondary mb-0">Check the applicable rate (contractual or prescribed) and any rules on interest in your jurisdiction.</p>
+  </div></div></div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -26,6 +26,9 @@
       <li><a class="nav-link {% if p|slice:':9' == '/reports/' %}active{% endif %}" href="{% url 'reports' %}"><i class="bi bi-bar-chart"></i> Reports</a></li>
       <li class="mt-3 small text-uppercase text-secondary px-3">Admin</li>
       <li><a class="nav-link {% if p|slice:':19' == '/matters/templates/' %}active{% endif %}" href="{% url 'template_list' %}"><i class="bi bi-file-earmark-text"></i> Precedents</a></li>
+      <li><a class="nav-link {% if p|slice:':19' == '/matters/workflows/' %}active{% endif %}" href="{% url 'workflow_list' %}"><i class="bi bi-list-check"></i> Workflows</a></li>
+      <li><a class="nav-link {% if p == '/tools/interest/' %}active{% endif %}" href="{% url 'interest_calculator' %}"><i class="bi bi-calculator"></i> Interest calculator</a></li>
+      {% if can.import_data %}<li><a class="nav-link {% if p == '/import/' %}active{% endif %}" href="{% url 'data_import' %}"><i class="bi bi-upload"></i> Import data</a></li>{% endif %}
       {% if can.manage_users %}<li><a class="nav-link {% if p|slice:':7' == '/users/' %}active{% endif %}" href="{% url 'user_list' %}"><i class="bi bi-person-gear"></i> Users</a></li>{% endif %}
       {% if can.firm_settings %}<li><a class="nav-link {% if p == '/settings/' %}active{% endif %}" href="{% url 'firm_settings' %}"><i class="bi bi-gear"></i> Firm settings</a></li>{% endif %}
       {% if can.audit_log %}<li><a class="nav-link {% if p == '/audit/' %}active{% endif %}" href="{% url 'audit_log' %}"><i class="bi bi-journal-check"></i> Audit log</a></li>{% endif %}

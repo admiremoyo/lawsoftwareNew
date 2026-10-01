@@ -2,7 +2,8 @@ import os
 
 from django.contrib import messages
 from django.core.files.base import ContentFile
-from django.db.models import Q
+from django.db import transaction
+from django.db.models import Count, Max, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import Context, Template, TemplateSyntaxError
@@ -11,12 +12,15 @@ from django.utils.html import linebreaks
 from django.utils.text import slugify
 from django.views.generic import CreateView, ListView, UpdateView
 
-from accounts.permissions import PermissionMixin
+from accounts.permissions import PermissionMixin, require_perm
 from core.models import AuditLog, FirmSettings
 from trust.models import TrustTransaction
 
-from .forms import DocumentForm, DocumentTemplateForm, FileNoteForm, GenerateDocumentForm, MatterForm
-from .models import Document, DocumentTemplate, Matter
+from .forms import (
+    DocumentForm, DocumentTemplateForm, FileNoteForm, GenerateDocumentForm, MatterForm, MatterTaskForm,
+    WorkflowStepFormSet, WorkflowTemplateForm,
+)
+from .models import Document, DocumentTemplate, Matter, MatterTask, WorkflowTemplate
 
 
 class MatterList(ListView):
@@ -58,7 +62,12 @@ class MatterCreate(CreateView):
     def form_valid(self, form):
         response = super().form_valid(form)
         AuditLog.record(self.request.user, "create", self.object)
-        messages.success(self.request, f"Matter {self.object.file_number} opened.")
+        applied = []
+        for workflow in WorkflowTemplate.objects.filter(auto_apply=True, matter_type=self.object.matter_type):
+            workflow.apply_to(self.object)
+            applied.append(workflow.name)
+        note = f" Checklist added: {', '.join(applied)}." if applied else ""
+        messages.success(self.request, f"Matter {self.object.file_number} opened.{note}")
         return response
 
 
@@ -101,6 +110,10 @@ def matter_detail(request, pk):
         "invoices": matter.invoices.all(),
         "ledger": ledger,
         "diary": matter.diary_entries.select_related("assigned_to"),
+        "tasks": matter.tasks.select_related("done_by"),
+        "task_form": MatterTaskForm(),
+        "workflows": WorkflowTemplate.objects.all(),
+        "today": timezone.localdate(),
     }
     return render(request, "matters/matter_detail.html", context)
 
@@ -214,3 +227,73 @@ class TemplateUpdate(PermissionMixin, UpdateView):
     def get_success_url(self):
         return "/matters/templates/"
 
+
+
+# ---------------------------------------------------------------- checklists / workflows
+
+def _checklist_url(matter):
+    return f"{matter.get_absolute_url()}?tab=checklist"
+
+
+def task_add(request, pk):
+    matter = get_object_or_404(Matter, pk=pk)
+    form = MatterTaskForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        task = form.save(commit=False)
+        task.matter = matter
+        task.order = (matter.tasks.aggregate(m=Max("order"))["m"] or 0) + 1
+        task.save()
+    return redirect(_checklist_url(matter))
+
+
+def task_toggle(request, pk):
+    task = get_object_or_404(MatterTask, pk=pk)
+    if request.method == "POST":
+        task.done = not task.done
+        task.done_by = request.user if task.done else None
+        task.done_at = timezone.now() if task.done else None
+        task.save()
+        if task.done:
+            AuditLog.record(request.user, "task", task, f"{task.matter.file_number}: completed '{task.title}'")
+    return redirect(request.POST.get("next") if url_is_local(request.POST.get("next")) else _checklist_url(task.matter))
+
+
+def task_delete(request, pk):
+    task = get_object_or_404(MatterTask, pk=pk)
+    if request.method == "POST":
+        task.delete()
+    return redirect(_checklist_url(task.matter))
+
+
+def apply_workflow(request, pk):
+    matter = get_object_or_404(Matter, pk=pk)
+    workflow = get_object_or_404(WorkflowTemplate, pk=request.POST.get("workflow"))
+    if request.method == "POST":
+        workflow.apply_to(matter)
+        messages.success(request, f"Added the '{workflow.name}' checklist.")
+    return redirect(_checklist_url(matter))
+
+
+def url_is_local(url):
+    return bool(url) and url.startswith("/") and not url.startswith("//")
+
+
+def workflow_list(request):
+    return render(request, "matters/workflow_list.html", {
+        "workflows": WorkflowTemplate.objects.annotate(step_count=Count("steps")),
+    })
+
+
+@require_perm("manage_templates")
+def workflow_form(request, pk=None):
+    workflow = get_object_or_404(WorkflowTemplate, pk=pk) if pk else WorkflowTemplate()
+    form = WorkflowTemplateForm(request.POST or None, instance=workflow)
+    formset = WorkflowStepFormSet(request.POST or None, instance=workflow)
+    if request.method == "POST" and form.is_valid() and formset.is_valid():
+        with transaction.atomic():
+            workflow = form.save()
+            formset.instance = workflow
+            formset.save()
+        messages.success(request, "Workflow saved.")
+        return redirect("workflow_list")
+    return render(request, "matters/workflow_form.html", {"form": form, "formset": formset, "workflow": workflow})
