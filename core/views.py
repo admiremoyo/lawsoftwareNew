@@ -130,8 +130,15 @@ def _csv(filename, header, rows):
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     writer = csv.writer(response)
     writer.writerow(header)
-    writer.writerows(rows)
+    writer.writerows([[_csv_safe(v) for v in row] for row in rows])
     return response
+
+
+def _csv_safe(value):
+    """Stop spreadsheet formula injection from text fields such as client names."""
+    if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
+        return "'" + value
+    return value
 
 
 def reports(request):

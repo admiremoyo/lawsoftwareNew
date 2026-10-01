@@ -20,4 +20,6 @@ class TrustTransactionAdmin(admin.ModelAdmin):
         return False
 
 
-admin.site.register(TrustReconciliation)
+from billing.admin import ReadOnlyAdmin  # noqa: E402
+
+admin.site.register(TrustReconciliation, ReadOnlyAdmin)

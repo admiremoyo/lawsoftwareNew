@@ -108,6 +108,10 @@ class Invoice(models.Model):
         self.status = "void"
         self.save(update_fields=["status"])
 
+    # Never callable from a template.
+    refresh_status.alters_data = True
+    void.alters_data = True
+
 
 class InvoiceItem(models.Model):
     """Manual fee line, e.g. a fixed fee or tariff item."""

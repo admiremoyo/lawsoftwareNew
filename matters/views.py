@@ -6,7 +6,7 @@ from django.db import transaction
 from django.db.models import Count, Max, Q
 from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import Context, Template, TemplateSyntaxError
+from django.template import TemplateSyntaxError
 from django.utils import timezone
 from django.utils.html import linebreaks
 from django.utils.text import slugify
@@ -14,12 +14,14 @@ from django.views.generic import CreateView, ListView, UpdateView
 
 from accounts.permissions import PermissionMixin, require_perm
 from core.models import AuditLog, FirmSettings
+from core.utils import safe_next
 from trust.models import TrustTransaction
 
 from .forms import (
     DocumentForm, DocumentTemplateForm, FileNoteForm, GenerateDocumentForm, MatterForm, MatterTaskForm,
     WorkflowStepFormSet, WorkflowTemplateForm,
 )
+from .merge import UnsafeTemplate, render_precedent
 from .models import Document, DocumentTemplate, Matter, MatterTask, WorkflowTemplate
 
 
@@ -168,14 +170,7 @@ def delete_document(request, pk):
 
 
 def render_template_for(template_obj, matter, user):
-    context = Context({
-        "firm": FirmSettings.load(),
-        "client": matter.client,
-        "matter": matter,
-        "author": user.get_full_name() or user.username,
-        "today": timezone.localdate().strftime("%d %B %Y"),
-    })
-    return Template(template_obj.body).render(context)
+    return render_precedent(template_obj.body, FirmSettings.load(), matter, user)
 
 
 def generate_document(request, pk):
@@ -186,7 +181,7 @@ def generate_document(request, pk):
     tpl = form.cleaned_data["template"]
     try:
         body = render_template_for(tpl, matter, request.user)
-    except TemplateSyntaxError as exc:
+    except (TemplateSyntaxError, UnsafeTemplate) as exc:
         messages.error(request, f"Template error: {exc}")
         return redirect(f"{matter.get_absolute_url()}?tab=documents")
     html = (
@@ -255,7 +250,7 @@ def task_toggle(request, pk):
         task.save()
         if task.done:
             AuditLog.record(request.user, "task", task, f"{task.matter.file_number}: completed '{task.title}'")
-    return redirect(request.POST.get("next") if url_is_local(request.POST.get("next")) else _checklist_url(task.matter))
+    return redirect(safe_next(request, _checklist_url(task.matter)))
 
 
 def task_delete(request, pk):
@@ -272,10 +267,6 @@ def apply_workflow(request, pk):
         workflow.apply_to(matter)
         messages.success(request, f"Added the '{workflow.name}' checklist.")
     return redirect(_checklist_url(matter))
-
-
-def url_is_local(url):
-    return bool(url) and url.startswith("/") and not url.startswith("//")
 
 
 def workflow_list(request):

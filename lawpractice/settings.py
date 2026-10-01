@@ -65,6 +65,8 @@ MIDDLEWARE = [
     "core.middleware.LoginRequiredMiddleware",
     "core.middleware.SecurityHeadersMiddleware",
 ]
+if DEBUG:  # the development server serves static files itself
+    MIDDLEWARE.remove("whitenoise.middleware.WhiteNoiseMiddleware")
 
 ROOT_URLCONF = "lawpractice.urls"
 

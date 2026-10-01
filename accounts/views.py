@@ -7,14 +7,15 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model, login, update_session_auth_hash
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.forms import PasswordChangeForm
+from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.http import url_has_allowed_host_and_scheme
 
 from core.forms import StyledFormMixin
 from core.models import AuditLog, FirmSettings
+from core.utils import safe_next
 
 from . import totp
 from .forms import LOCKED_MESSAGE, LockoutAuthenticationForm, SetupForm, TwoFactorCodeForm, UserForm, is_locked_out
@@ -25,13 +26,6 @@ from .signals import client_ip
 User = get_user_model()
 PENDING_KEY = "2fa_pending"
 PENDING_SECONDS = 300
-
-
-def _safe_next(request, default):
-    nxt = request.POST.get("next") or request.GET.get("next")
-    if nxt and url_has_allowed_host_and_scheme(nxt, {request.get_host()}, require_https=request.is_secure()):
-        return nxt
-    return default
 
 
 # ---------------------------------------------------------------- sign in
@@ -136,7 +130,7 @@ def two_factor_setup(request):
             device.save()
             AuditLog.record(request.user, "2fa", request.user, "Turned on two-factor sign-in")
             messages.success(request, "Two-factor sign-in is now on. You'll need your phone each time you sign in.")
-            return redirect(_safe_next(request, reverse("my_account")))
+            return redirect(safe_next(request, reverse("my_account")))
         form.add_error("code", "That code is not valid. Scan the QR code again and enter the current code.")
     uri = totp.provisioning_uri(device.secret, request.user.get_username(), FirmSettings.load().name)
     return render(request, "accounts/two_factor_setup.html", {
@@ -203,6 +197,16 @@ class PasswordResetView(auth_views.PasswordResetView):
     template_name = "accounts/password_reset.html"
     email_template_name = "accounts/password_reset_email.txt"
     subject_template_name = "accounts/password_reset_subject.txt"
+    MAX_PER_HOUR = 5
+
+    def form_valid(self, form):
+        # Limit reset emails per address and per IP so the form can't be used to flood inboxes.
+        keys = [f"pwreset:ip:{client_ip(self.request)}", f"pwreset:email:{form.cleaned_data['email'].lower()}"]
+        if any(cache.get(k, 0) >= self.MAX_PER_HOUR for k in keys):
+            return redirect(self.get_success_url())  # same response either way: reveals nothing
+        for k in keys:
+            cache.set(k, cache.get(k, 0) + 1, 3600)
+        return super().form_valid(form)
 
 
 class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):

@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from django.conf import settings
 from django.contrib.auth.views import redirect_to_login
 from django.shortcuts import redirect
@@ -27,7 +29,7 @@ class LoginRequiredMiddleware:
             if FirmSettings.load().require_two_factor:
                 device = getattr(user, "two_factor", None)
                 if not (device and device.confirmed):
-                    return redirect(f"/account/2fa/?next={path}")
+                    return redirect(f"/account/2fa/?next={quote(path)}")
         return self.get_response(request)
 
 

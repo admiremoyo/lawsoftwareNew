@@ -59,6 +59,20 @@ class DocumentTemplateForm(StyledFormMixin, forms.ModelForm):
         fields = "__all__"
         widgets = {"body": forms.Textarea(attrs={"rows": 18})}
 
+    def clean_body(self):
+        from django.template import TemplateSyntaxError
+
+        from .merge import BLOCKED_TAGS, ENGINE
+
+        body = self.cleaned_data["body"]
+        if any(tag in body.lower() for tag in BLOCKED_TAGS):
+            raise forms.ValidationError("Precedents can't use include, extends, load or debug tags.")
+        try:
+            ENGINE.from_string(body)
+        except TemplateSyntaxError as exc:
+            raise forms.ValidationError(f"Template error: {exc}")
+        return body
+
 
 class GenerateDocumentForm(StyledFormMixin, forms.Form):
     template = forms.ModelChoiceField(queryset=DocumentTemplate.objects.all())

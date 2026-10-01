@@ -6,6 +6,8 @@ from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from core.utils import safe_next
+
 from .forms import DiaryEntryForm
 from .models import DiaryEntry
 
@@ -65,8 +67,7 @@ def entry_toggle(request, pk):
     if request.method == "POST":
         entry.completed = not entry.completed
         entry.save(update_fields=["completed"])
-    nxt = request.POST.get("next", "/")
-    return redirect(nxt if nxt.startswith("/") and not nxt.startswith("//") else "/")
+    return redirect(safe_next(request, "/diary/"))
 
 
 def entry_delete(request, pk):

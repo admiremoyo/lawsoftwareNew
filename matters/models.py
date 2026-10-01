@@ -175,6 +175,9 @@ class WorkflowTemplate(models.Model):
             )
 
 
+    apply_to.alters_data = True
+
+
 class WorkflowStep(models.Model):
     template = models.ForeignKey(WorkflowTemplate, on_delete=models.CASCADE, related_name="steps")
     order = models.PositiveIntegerField(default=0)

@@ -10,6 +10,7 @@ from accounts.permissions import PERMISSIONS, has_perm, require_perm
 from core.emailing import EmailFailed, send_document
 from core.forms import EmailDocumentForm
 from core.models import AuditLog, FirmSettings
+from core.utils import safe_next
 from core.pdf import pdf_response, render_pdf
 from core.templatetags.lawtags import money
 from matters.models import Matter
@@ -19,8 +20,7 @@ from .models import Disbursement, Invoice, InvoiceItem, Payment, TimeEntry
 
 
 def _back(request, default):
-    nxt = request.GET.get("next") or request.POST.get("next")
-    return nxt if nxt and nxt.startswith("/") and not nxt.startswith("//") else default
+    return safe_next(request, default)
 
 
 # ---------------------------------------------------------------- time recording
