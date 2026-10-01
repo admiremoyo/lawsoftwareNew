@@ -1,4 +1,5 @@
 from django import forms
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Q
 
@@ -31,10 +32,25 @@ class FileNoteForm(StyledFormMixin, forms.ModelForm):
         widgets = {"date": DateInput()}
 
 
+ALLOWED_EXTENSIONS = {
+    "pdf", "doc", "docx", "dot", "dotx", "rtf", "odt", "txt", "xls", "xlsx", "csv", "ods", "ppt", "pptx",
+    "jpg", "jpeg", "png", "gif", "tif", "tiff", "bmp", "msg", "eml", "zip", "7z",
+}
+
+
 class DocumentForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = Document
         fields = ["title", "file"]
+
+    def clean_file(self):
+        upload = self.cleaned_data["file"]
+        ext = upload.name.rsplit(".", 1)[-1].lower() if "." in upload.name else ""
+        if ext not in ALLOWED_EXTENSIONS:
+            raise forms.ValidationError(f"Files of type .{ext or '?'} can't be uploaded.")
+        if upload.size > settings.MAX_UPLOAD_MB * 1024 * 1024:
+            raise forms.ValidationError(f"Files must be smaller than {settings.MAX_UPLOAD_MB} MB.")
+        return upload
 
 
 class DocumentTemplateForm(StyledFormMixin, forms.ModelForm):

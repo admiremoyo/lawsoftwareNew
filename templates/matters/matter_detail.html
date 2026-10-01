@@ -13,12 +13,12 @@
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="{% url 'time_create' %}?matter={{ matter.pk }}">Record time</a></li>
         <li><a class="dropdown-item" href="{% url 'disbursement_create' %}?matter={{ matter.pk }}">Add disbursement</a></li>
-        <li><a class="dropdown-item" href="{% url 'invoice_create' matter.pk %}">Draft fee note</a></li>
+        {% if can.invoice_issue %}<li><a class="dropdown-item" href="{% url 'invoice_create' matter.pk %}">Draft fee note</a></li>{% endif %}
         <li><a class="dropdown-item" href="{% url 'diary_create' %}?matter={{ matter.pk }}">Add diary entry</a></li>
-        <li><hr class="dropdown-divider"></li>
+        {% if can.trust_post %}<li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item" href="{% url 'trust_receipt' %}?matter={{ matter.pk }}">Trust receipt</a></li>
         <li><a class="dropdown-item" href="{% url 'trust_payment' %}?matter={{ matter.pk }}">Trust payment</a></li>
-        <li><a class="dropdown-item" href="{% url 'trust_transfer' %}?matter={{ matter.pk }}">Trust transfer to another matter</a></li>
+        <li><a class="dropdown-item" href="{% url 'trust_transfer' %}?matter={{ matter.pk }}">Trust transfer to another matter</a></li>{% endif %}
       </ul></div>
   </div>
 </div>
@@ -88,21 +88,21 @@
   {% empty %}<tr><td colspan="6" class="text-secondary">No disbursements.</td></tr>{% endfor %}</tbody></table>
 
 {% elif tab == 'invoices' %}
-  <div class="mb-2"><a class="btn btn-sm btn-primary" href="{% url 'invoice_create' matter.pk %}"><i class="bi bi-plus-lg"></i> Draft fee note</a></div>
+  <div class="mb-2">{% if can.invoice_issue %}<a class="btn btn-sm btn-primary" href="{% url 'invoice_create' matter.pk %}"><i class="bi bi-plus-lg"></i> Draft fee note</a>{% endif %}</div>
   <table class="table table-sm"><thead><tr><th>Number</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">Balance</th></tr></thead>
   <tbody>{% for i in invoices %}<tr><td><a href="{{ i.get_absolute_url }}">{{ i.number }}</a></td><td>{{ i.date|date:"d M Y" }}</td><td>{{ i.get_status_display }}</td><td class="num">{{ i.total|money }}</td><td class="num">{{ i.balance|money }}</td></tr>
   {% empty %}<tr><td colspan="5" class="text-secondary">No fee notes.</td></tr>{% endfor %}</tbody></table>
 
 {% elif tab == 'trust' %}
-  <div class="mb-2 d-flex gap-2">
+  {% if can.trust_post %}<div class="mb-2 d-flex gap-2">
     <a class="btn btn-sm btn-success" href="{% url 'trust_receipt' %}?matter={{ matter.pk }}">Receipt</a>
     <a class="btn btn-sm btn-warning" href="{% url 'trust_payment' %}?matter={{ matter.pk }}">Payment</a>
     <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_transfer' %}?matter={{ matter.pk }}">Transfer to matter</a>
-  </div>
+  </div>{% endif %}
   <table class="table table-sm"><thead><tr><th>Date</th><th>Type</th><th>Party</th><th>Description</th><th>Ref</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th></th></tr></thead>
   <tbody>{% for tx, bal in ledger %}<tr><td class="text-nowrap">{{ tx.date|date:"d M Y" }}</td><td>{{ tx.get_type_display }}</td><td>{{ tx.party }}</td><td>{{ tx.description }}{% if tx.invoice %} (<a href="{{ tx.invoice.get_absolute_url }}">{{ tx.invoice.number }}</a>){% endif %}</td><td>{{ tx.reference }}</td>
     <td class="num">{% if tx.signed_amount > 0 %}{{ tx.signed_amount|money }}{% endif %}</td><td class="num">{% if tx.signed_amount < 0 %}{{ tx.amount|money }}{% endif %}</td><td class="num fw-semibold">{{ bal|money }}</td>
-    <td>{% if tx.type != 'reversal' and not tx.reversed_by %}<a class="btn btn-sm btn-link p-0" href="{% url 'trust_reverse' tx.pk %}">Reverse</a>{% elif tx.reversed_by %}<span class="badge text-bg-light">reversed</span>{% endif %}</td></tr>
+    <td>{% if tx.type != 'reversal' and not tx.reversed_by and can.trust_reverse %}<a class="btn btn-sm btn-link p-0" href="{% url 'trust_reverse' tx.pk %}">Reverse</a>{% elif tx.reversed_by %}<span class="badge text-bg-light">reversed</span>{% endif %}</td></tr>
   {% empty %}<tr><td colspan="9" class="text-secondary">No trust transactions on this matter.</td></tr>{% endfor %}</tbody></table>
 
 {% elif tab == 'documents' %}
@@ -115,7 +115,7 @@
       <button class="btn btn-sm btn-primary mt-2">Generate Word document</button></form></div>
   </div>
   <table class="table table-sm"><thead><tr><th>Title</th><th>Uploaded</th><th>By</th><th></th></tr></thead>
-  <tbody>{% for d in matter.documents.all %}<tr><td><a href="{{ d.file.url }}" target="_blank">{{ d.title }}</a></td><td>{{ d.uploaded_at|date:"d M Y H:i" }}</td><td>{{ d.uploaded_by }}</td>
+  <tbody>{% for d in matter.documents.all %}<tr><td><a href="{% url 'document_download' d.pk %}">{{ d.title }}</a></td><td>{{ d.uploaded_at|date:"d M Y H:i" }}</td><td>{{ d.uploaded_by }}</td>
     <td><form method="post" action="{% url 'document_delete' d.pk %}" onsubmit="return confirm('Delete this document?')">{% csrf_token %}<button class="btn btn-sm btn-link text-danger p-0">Delete</button></form></td></tr>
   {% empty %}<tr><td colspan="4" class="text-secondary">No documents.</td></tr>{% endfor %}</tbody></table>
 

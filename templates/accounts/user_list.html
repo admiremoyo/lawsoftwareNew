@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Users{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3"><h4 class="mb-0">Users</h4>
+  <a class="btn btn-primary" href="{% url 'user_create' %}"><i class="bi bi-plus-lg"></i> New user</a></div>
+<div class="card mb-4"><table class="table mb-0">
+  <thead><tr><th>Name</th><th>Username</th><th>Email</th><th>Role</th><th class="num">Rate</th><th>2FA</th><th>Status</th><th></th></tr></thead>
+  <tbody>{% for u in users %}<tr class="{% if not u.is_active %}text-secondary{% endif %}">
+    <td><a href="{% url 'user_edit' u.pk %}">{{ u.get_full_name|default:u.username }}</a>{% if u.is_superuser %} <span class="badge text-bg-dark">admin</span>{% endif %}</td>
+    <td>{{ u.username }}</td><td>{{ u.email }}</td><td>{{ u.profile.get_role_display }}</td>
+    <td class="num">{% if u.profile.hourly_rate %}{{ u.profile.hourly_rate|money }}{% else %}default{% endif %}</td>
+    <td>{% if u.pk in devices %}<span class="badge text-bg-success">on</span>{% else %}<span class="badge text-bg-light">off</span>{% endif %}</td>
+    <td>{{ u.is_active|yesno:"Active,Inactive" }}</td>
+    <td><form method="post" action="{% url 'user_reset_2fa' u.pk %}" onsubmit="return confirm('Reset two-factor sign-in and unlock this user?')">{% csrf_token %}<button class="btn btn-sm btn-link p-0">Reset 2FA / unlock</button></form></td></tr>
+  {% endfor %}</tbody></table></div>
+<h5>What each role can do</h5>
+<div class="card"><table class="table table-sm mb-0">
+  <thead><tr><th>Permission</th><th>Roles</th></tr></thead>
+  <tbody>{% for key, label, roles in permissions %}<tr><td>{{ label }}</td><td>{{ roles|join:", "|capfirst }}</td></tr>{% endfor %}
+  <tr><td>Clients, matters, time, disbursements, diary, documents</td><td>Everyone</td></tr></tbody></table></div>
+{% endblock %}

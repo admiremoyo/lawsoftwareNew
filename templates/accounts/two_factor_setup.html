@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Two-factor sign-in{% endblock %}
+{% block content %}
+<div class="card" style="max-width: 720px"><div class="card-body p-4">
+  <h4>Set up two-factor sign-in</h4>
+  {% if required %}<div class="alert alert-info">Your firm requires two-factor sign-in. Set it up to continue.</div>{% endif %}
+  <ol>
+    <li>Install an authenticator app on your phone (Google Authenticator, Microsoft Authenticator or Authy).</li>
+    <li>In the app, add an account and scan this QR code:</li>
+  </ol>
+  <div class="text-center my-3"><img src="{{ qr }}" alt="QR code" width="220" height="220"></div>
+  <p class="small text-secondary text-center">Can't scan? Enter this key manually: <code class="user-select-all">{{ secret }}</code></p>
+  <ol start="3"><li>Enter the 6-digit code the app shows:</li></ol>
+  <form method="post" class="d-flex gap-2" style="max-width: 360px">{% csrf_token %}
+    <input type="hidden" name="next" value="{{ request.GET.next }}">
+    {{ form.code }}<button class="btn btn-primary">Confirm</button></form>
+  {% for e in form.code.errors %}<div class="text-danger small mt-1">{{ e }}</div>{% endfor %}
+</div></div>
+{% endblock %}

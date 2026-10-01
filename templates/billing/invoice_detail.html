@@ -7,10 +7,10 @@
     <span class="text-secondary"><a href="{{ invoice.matter.get_absolute_url }}?tab=invoices">{{ invoice.matter }}</a> · {{ invoice.matter.client.name }}</span></div>
   <div class="d-flex gap-2">
     <a class="btn btn-outline-secondary" href="{% url 'invoice_print' invoice.pk %}" target="_blank"><i class="bi bi-printer"></i> Print / PDF</a>
-    {% if invoice.status == 'draft' %}
+    {% if invoice.status == 'draft' and can.invoice_issue %}
       <form method="post" action="{% url 'invoice_action' invoice.pk 'issue' %}">{% csrf_token %}<button class="btn btn-primary">Issue fee note</button></form>
     {% endif %}
-    {% if invoice.status == 'draft' or invoice.status == 'issued' %}
+    {% if can.invoice_void and invoice.status == 'draft' or can.invoice_void and invoice.status == 'issued' %}
       <form method="post" action="{% url 'invoice_action' invoice.pk 'void' %}" onsubmit="return confirm('Void this fee note? Its time and disbursements become unbilled again.')">{% csrf_token %}<button class="btn btn-outline-danger">Void</button></form>
     {% endif %}
   </div>
@@ -47,7 +47,7 @@
       <label class="form-label small mt-2">Notes</label>{{ edit_form.notes }}
       <button class="btn btn-sm btn-outline-primary mt-2">Update</button></form></div></div>
   {% endif %}
-  {% if invoice.status == 'issued' %}
+  {% if invoice.status == 'issued' and can.payment_record %}
   <div class="card mb-3"><div class="card-body"><h6>Record payment</h6>
     <form method="post" action="{% url 'payment_add' invoice.pk %}">{% csrf_token %}
       <div class="row g-2"><div class="col-6">{{ payment_form.date }}</div><div class="col-6">{{ payment_form.amount }}</div>
@@ -55,13 +55,13 @@
       <button class="btn btn-sm btn-success mt-2">Record payment</button></form>
     <hr>
     <p class="small mb-1">Trust balance on this matter: <strong>{{ trust_balance|money }}</strong></p>
-    {% if trust_balance > 0 %}<a class="btn btn-sm btn-outline-primary" href="{% url 'trust_fee_transfer' invoice.pk %}">Pay from trust</a>{% endif %}
+    {% if trust_balance > 0 and can.trust_post %}<a class="btn btn-sm btn-outline-primary" href="{% url 'trust_fee_transfer' invoice.pk %}">Pay from trust</a>{% endif %}
   </div></div>
   {% endif %}
   <div class="card"><div class="card-body"><h6>Payments</h6>
     {% for p in invoice.payments.all %}
       <div class="d-flex justify-content-between small border-bottom py-1"><span>{{ p.date|date:"d M Y" }} · {{ p.get_method_display }} {{ p.reference }}</span><span>{{ p.amount|money }}</span></div>
-      <form method="post" action="{% url 'payment_reverse' p.pk %}" class="text-end" onsubmit="this.reason.value = prompt('Reason for reversing this payment?') || ''; return this.reason.value !== '';">{% csrf_token %}<input type="hidden" name="reason"><button class="btn btn-sm btn-link text-danger p-0">Reverse</button></form>
+      {% if can.invoice_void %}<form method="post" action="{% url 'payment_reverse' p.pk %}" class="text-end" onsubmit="this.reason.value = prompt('Reason for reversing this payment?') || ''; return this.reason.value !== '';">{% csrf_token %}<input type="hidden" name="reason"><button class="btn btn-sm btn-link text-danger p-0">Reverse</button></form>{% endif %}
     {% empty %}<p class="text-secondary small mb-0">No payments.</p>{% endfor %}
   </div></div>
 </div>

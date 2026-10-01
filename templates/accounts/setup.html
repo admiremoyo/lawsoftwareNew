@@ -1,0 +1,25 @@
+{% extends "_auth_card.html" %}
+{% block title %}Set up{% endblock %}
+{% block width %}640px{% endblock %}
+{% block card %}
+<h5>Welcome – let's set up your firm</h5>
+<p class="text-secondary small">This runs once. You'll be the first partner and can add colleagues afterwards.</p>
+<form method="post">{% csrf_token %}
+  <h6 class="mt-3">Firm</h6>
+  <div class="row g-3">
+    <div class="col-md-6">{% include "_field.html" with field=form.firm_name %}</div>
+    <div class="col-md-3">{% include "_field.html" with field=form.currency_symbol %}</div>
+    <div class="col-md-3">{% include "_field.html" with field=form.vat_rate %}</div>
+  </div>
+  <h6 class="mt-4">Your account</h6>
+  <div class="row g-3">
+    <div class="col-md-6">{% include "_field.html" with field=form.first_name %}</div>
+    <div class="col-md-6">{% include "_field.html" with field=form.last_name %}</div>
+    <div class="col-md-6">{% include "_field.html" with field=form.email %}</div>
+    <div class="col-md-6">{% include "_field.html" with field=form.username %}</div>
+    <div class="col-md-6">{% include "_field.html" with field=form.password %}</div>
+    <div class="col-md-6">{% include "_field.html" with field=form.password_confirm %}</div>
+  </div>
+  <button class="btn btn-primary mt-4 w-100">Create firm</button>
+</form>
+{% endblock %}

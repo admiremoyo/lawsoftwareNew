@@ -1,7 +1,9 @@
+import os
+
 from django.contrib import messages
 from django.core.files.base import ContentFile
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template import Context, Template, TemplateSyntaxError
 from django.utils import timezone
@@ -9,6 +11,7 @@ from django.utils.html import linebreaks
 from django.utils.text import slugify
 from django.views.generic import CreateView, ListView, UpdateView
 
+from accounts.permissions import PermissionMixin
 from core.models import AuditLog, FirmSettings
 from trust.models import TrustTransaction
 
@@ -123,8 +126,21 @@ def upload_document(request, pk):
         AuditLog.record(request.user, "upload", doc, f"Uploaded {doc.title} to {matter.file_number}")
         messages.success(request, "Document uploaded.")
     else:
-        messages.error(request, "Upload failed – choose a file and give it a title.")
+        errors = [e for field_errors in form.errors.values() for e in field_errors]
+        messages.error(request, "Upload failed: " + (" ".join(errors) or "choose a file and give it a title."))
     return redirect(f"{matter.get_absolute_url()}?tab=documents")
+
+
+def download_document(request, pk):
+    """Documents are private: always served through this login-checked view, never as public files."""
+    doc = get_object_or_404(Document, pk=pk)
+    try:
+        handle = doc.file.open("rb")
+    except FileNotFoundError:
+        raise Http404("The file is missing from storage.")
+    # Only formats a browser can't execute script from may be shown inline.
+    inline = request.GET.get("inline") == "1" and doc.file.name.lower().endswith((".pdf", ".png", ".jpg", ".jpeg"))
+    return FileResponse(handle, as_attachment=not inline, filename=os.path.basename(doc.file.name))
 
 
 def delete_document(request, pk):
@@ -177,7 +193,8 @@ class TemplateList(ListView):
     model = DocumentTemplate
 
 
-class TemplateCreate(CreateView):
+class TemplateCreate(PermissionMixin, CreateView):
+    required_perm = "manage_templates"
     model = DocumentTemplate
     form_class = DocumentTemplateForm
     template_name = "form.html"
@@ -187,7 +204,8 @@ class TemplateCreate(CreateView):
         return "/matters/templates/"
 
 
-class TemplateUpdate(UpdateView):
+class TemplateUpdate(PermissionMixin, UpdateView):
+    required_perm = "manage_templates"
     model = DocumentTemplate
     form_class = DocumentTemplateForm
     template_name = "form.html"

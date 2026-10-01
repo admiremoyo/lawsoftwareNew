@@ -22,6 +22,10 @@ class FirmSettings(models.Model):
     business_bank_details = models.TextField(blank=True, help_text="Printed on fee notes.")
     trust_bank_name = models.CharField(max_length=100, blank=True)
     trust_account_number = models.CharField(max_length=50, blank=True)
+    require_two_factor = models.BooleanField(
+        "Require two-factor sign-in for all users", default=False,
+        help_text="Everyone must set up an authenticator app on their phone before using the system.",
+    )
 
     class Meta:
         verbose_name_plural = "firm settings"

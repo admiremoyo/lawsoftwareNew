@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}My account{% endblock %}
+{% block content %}
+<h4 class="mb-3">My account</h4>
+<div class="row g-3">
+  <div class="col-lg-6"><div class="card"><div class="card-body">
+    <h6>Change password</h6>
+    <form method="post">{% csrf_token %}
+      {% for field in form %}<div class="mb-2">{% include "_field.html" %}</div>{% endfor %}
+      <button class="btn btn-primary mt-2">Change password</button>
+    </form>
+  </div></div></div>
+  <div class="col-lg-6"><div class="card"><div class="card-body">
+    <h6>Two-factor sign-in</h6>
+    {% if two_factor_on %}
+      <p><span class="badge text-bg-success">On</span> You need a code from your authenticator app when you sign in.</p>
+      {% if not firm.require_two_factor %}
+      <form method="post" action="{% url 'two_factor_disable' %}" class="d-flex gap-2">{% csrf_token %}
+        <input type="password" name="password" class="form-control" placeholder="Your password" required>
+        <button class="btn btn-outline-danger text-nowrap">Turn off</button></form>
+      {% endif %}
+    {% else %}
+      <p class="text-secondary">Protect your account – and your clients' money – with a code from your phone (Google Authenticator, Microsoft Authenticator, Authy…).</p>
+      <a class="btn btn-success" href="{% url 'two_factor_setup' %}">Turn on two-factor sign-in</a>
+    {% endif %}
+    <hr>
+    <dl class="mb-0 small"><dt>Username</dt><dd>{{ user.username }}</dd><dt>Role</dt><dd>{{ user.profile.get_role_display }}</dd>
+      <dt>Hourly rate</dt><dd>{{ user.profile.hourly_rate|default:"Firm default" }}</dd></dl>
+  </div></div></div>
+</div>
+{% endblock %}

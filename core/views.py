@@ -4,12 +4,13 @@ from decimal import Decimal
 
 from django.contrib import messages
 from django.contrib.auth import get_user_model
-from django.contrib.auth.decorators import user_passes_test
 from django.db.models import Q, Sum
-from django.http import HttpResponse
+from django.db import connection
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
+from accounts.permissions import require_perm
 from billing.models import Disbursement, Invoice, TimeEntry
 from clients.models import Client
 from diary.models import DiaryEntry
@@ -18,6 +19,34 @@ from trust.models import TrustTransaction
 
 from .forms import FirmSettingsForm
 from .models import AuditLog, FirmSettings
+
+
+def health(request):
+    """Used by Docker / uptime monitors. Public, reveals nothing."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+    except Exception:  # noqa: BLE001
+        return JsonResponse({"status": "error"}, status=503)
+    return JsonResponse({"status": "ok"})
+
+
+def permission_denied(request, exception=None):
+    return render(request, "error.html", {
+        "code": 403, "title": "Not allowed",
+        "message": f"Your role doesn't allow this: {exception}." if exception and str(exception) else
+        "Your role doesn't allow this action. Ask a partner if you need access.",
+    }, status=403)
+
+
+def not_found(request, exception=None):
+    return render(request, "error.html", {"code": 404, "title": "Page not found",
+                                          "message": "That page or record doesn't exist."}, status=404)
+
+
+def server_error(request):
+    return render(request, "error.html", {"code": 500, "title": "Something went wrong",
+                                          "message": "The error has been logged. Please try again."}, status=500)
 
 
 def dashboard(request):
@@ -66,11 +95,7 @@ def search(request):
     return render(request, "core/search.html", context)
 
 
-def is_partner_or_admin(user):
-    return user.is_superuser or getattr(getattr(user, "profile", None), "role", "") in ("partner", "bookkeeper")
-
-
-@user_passes_test(is_partner_or_admin)
+@require_perm("firm_settings")
 def firm_settings(request):
     obj = FirmSettings.load()
     form = FirmSettingsForm(request.POST or None, instance=obj)
@@ -82,7 +107,7 @@ def firm_settings(request):
     return render(request, "form.html", {"form": form, "title": "Firm settings"})
 
 
-@user_passes_test(is_partner_or_admin)
+@require_perm("audit_log")
 def audit_log(request):
     return render(request, "core/audit_log.html", {"entries": AuditLog.objects.select_related("user")[:500]})
 
@@ -109,6 +134,7 @@ def reports(request):
     return render(request, "core/reports.html")
 
 
+@require_perm("financial_reports")
 def report_wip(request):
     """Work in progress: unbilled time and disbursements per matter."""
     rows = []
@@ -125,6 +151,7 @@ def report_wip(request):
     return render(request, "core/report_wip.html", {"rows": rows, "totals": totals})
 
 
+@require_perm("financial_reports")
 def report_debtors(request):
     """Aged debtors: outstanding fee notes bucketed by age."""
     as_at = _parse_date(request.GET.get("as_at"), timezone.localdate())
@@ -149,6 +176,7 @@ def report_debtors(request):
     return render(request, "core/report_debtors.html", {"rows": rows, "totals": totals, "as_at": as_at})
 
 
+@require_perm("trust_view")
 def report_trust(request):
     """Trust balances per matter (the trust creditors listing)."""
     as_at = _parse_date(request.GET.get("as_at"), timezone.localdate())
@@ -167,6 +195,7 @@ def report_trust(request):
     })
 
 
+@require_perm("financial_reports")
 def report_time(request):
     """Recorded time per fee earner over a period."""
     today = timezone.localdate()

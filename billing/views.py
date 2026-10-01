@@ -1,10 +1,12 @@
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.views.generic import ListView
 
+from accounts.permissions import PERMISSIONS, has_perm, require_perm
 from core.models import AuditLog
 from matters.models import Matter
 
@@ -116,6 +118,7 @@ class InvoiceList(ListView):
         return super().get_context_data(statuses=Invoice.STATUS_CHOICES, **kwargs)
 
 
+@require_perm("invoice_issue")
 def invoice_create(request, matter_pk):
     matter = get_object_or_404(Matter, pk=matter_pk)
     unbilled_time = matter.time_entries.filter(invoice__isnull=True, billable=True)
@@ -159,6 +162,7 @@ def invoice_print(request, pk):
     return render(request, "billing/invoice_print.html", {"invoice": invoice})
 
 
+@require_perm("invoice_issue")
 def invoice_edit(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk, status="draft")
     form = InvoiceEditForm(request.POST or None, instance=invoice)
@@ -172,6 +176,9 @@ def invoice_action(request, pk, action):
     invoice = get_object_or_404(Invoice, pk=pk)
     if request.method != "POST":
         return redirect(invoice)
+    needed = "invoice_void" if action == "void" else "invoice_issue"
+    if not has_perm(request.user, needed):
+        raise PermissionDenied(PERMISSIONS[needed][0])
     if action == "issue" and invoice.status == "draft":
         if invoice.total <= 0:
             messages.error(request, "A fee note must have a total greater than zero.")
@@ -200,6 +207,7 @@ def invoice_action(request, pk, action):
     return redirect(invoice)
 
 
+@require_perm("invoice_void")
 def payment_reverse(request, pk):
     from trust import services as trust_services
 
@@ -219,6 +227,7 @@ def payment_reverse(request, pk):
     return redirect(invoice)
 
 
+@require_perm("payment_record")
 def payment_add(request, pk):
     invoice = get_object_or_404(Invoice, pk=pk, status="issued")
     form = PaymentForm(invoice, request.POST or None)

@@ -7,6 +7,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from accounts.permissions import require_perm
 from billing.models import Invoice
 from core.models import AuditLog
 from matters.models import Matter
@@ -16,6 +17,7 @@ from .forms import FeeTransferForm, MatterTransferForm, ReconciliationForm, Reve
 from .models import TrustReconciliation, TrustTransaction
 
 
+@require_perm("trust_view")
 def cashbook(request):
     qs = TrustTransaction.objects.select_related("matter__client", "created_by").order_by("-date", "-id")
     q = request.GET.get("q", "").strip()
@@ -57,20 +59,24 @@ def _entry(request, kind):
     })
 
 
+@require_perm("trust_post")
 def receipt(request):
     return _entry(request, "receipt")
 
 
+@require_perm("trust_post")
 def payment(request):
     return _entry(request, "payment")
 
 
+@require_perm("trust_view")
 def receipt_print(request, pk):
     tx = get_object_or_404(TrustTransaction.objects.select_related("matter__client"), pk=pk,
                            type=TrustTransaction.RECEIPT)
     return render(request, "trust/receipt_print.html", {"tx": tx})
 
 
+@require_perm("trust_post")
 def fee_transfer(request, invoice_pk):
     invoice = get_object_or_404(Invoice, pk=invoice_pk)
     available = invoice.matter.trust_balance
@@ -93,6 +99,7 @@ def fee_transfer(request, invoice_pk):
     })
 
 
+@require_perm("trust_post")
 def matter_transfer(request):
     form = MatterTransferForm(request.POST or None, initial={
         "date": timezone.localdate(), "source": request.GET.get("matter"),
@@ -110,6 +117,7 @@ def matter_transfer(request):
     return render(request, "form.html", {"form": form, "title": "Transfer trust funds between matters"})
 
 
+@require_perm("trust_reverse")
 def reverse(request, pk):
     tx = get_object_or_404(TrustTransaction, pk=pk)
     form = ReversalForm(request.POST or None, initial={"date": timezone.localdate()})
@@ -128,12 +136,14 @@ def reverse(request, pk):
     })
 
 
+@require_perm("trust_view")
 def reconciliation_list(request):
     return render(request, "trust/reconciliation_list.html", {
         "reconciliations": TrustReconciliation.objects.select_related("prepared_by"),
     })
 
 
+@require_perm("trust_reconcile")
 def reconciliation_new(request):
     """Tick the cash book entries that appear on the bank statement, then save the reconciliation."""
     try:
@@ -173,5 +183,6 @@ def reconciliation_new(request):
     })
 
 
+@require_perm("trust_view")
 def reconciliation_detail(request, pk):
     return render(request, "trust/reconciliation_detail.html", {"rec": get_object_or_404(TrustReconciliation, pk=pk)})

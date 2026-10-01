@@ -7,3 +7,4 @@ staticfiles/
 venv/
 .env
 node_modules/
+backups/

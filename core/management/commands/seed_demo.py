@@ -23,7 +23,16 @@ class Command(BaseCommand):
         profile.role, profile.initials, profile.hourly_rate = role, initials, Decimal(rate)
         profile.save()
 
+    def add_arguments(self, parser):
+        parser.add_argument("--force", action="store_true", help="Allow seeding when DEBUG is off.")
+
     def handle(self, *args, **options):
+        from django.conf import settings
+
+        if not settings.DEBUG and not options["force"]:
+            self.stderr.write("Refusing to load demo data (with weak demo passwords) on a production server. "
+                              "Use --force on a demo/sales instance only.")
+            return
         if Client.objects.exists():
             self.stdout.write(self.style.WARNING("Data already exists – skipping demo seed."))
             return
@@ -40,10 +49,10 @@ class Command(BaseCommand):
         firm.trust_account_number = "TRUST-9876543210"
         firm.save()
 
-        admin = User.objects.create_superuser("admin", "admin@demo-law.example", "admin123",
+        admin = User.objects.create_superuser("admin", "admin@demo-law.example", "demo-admin-2026",
                                               first_name="Alex", last_name="Partner")
         self._profile(admin, "partner", "AP", "250")
-        assoc = User.objects.create_user("associate", "assoc@demo-law.example", "associate123",
+        assoc = User.objects.create_user("associate", "assoc@demo-law.example", "demo-associate-2026",
                                          first_name="Sam", last_name="Associate")
         self._profile(assoc, "associate", "SA", "150")
 
@@ -133,5 +142,5 @@ class Command(BaseCommand):
         ))
 
         self.stdout.write(self.style.SUCCESS(
-            "Demo data created. Log in as admin / admin123 (partner) or associate / associate123."
+            "Demo data created. Log in as admin / demo-admin-2026 (partner) or associate / demo-associate-2026."
         ))

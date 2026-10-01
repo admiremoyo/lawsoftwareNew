@@ -1,13 +1,15 @@
-from django.conf import settings
-from django.conf.urls.static import static
 from django.contrib import admin
-from django.contrib.auth import views as auth_views
 from django.urls import include, path
 
+from core.views import health
+
+admin.site.site_header = "LawPractice administration"
+admin.site.site_title = "LawPractice"
+
 urlpatterns = [
+    path("health/", health, name="health"),
     path("admin/", admin.site.urls),
-    path("login/", auth_views.LoginView.as_view(), name="login"),
-    path("logout/", auth_views.LogoutView.as_view(), name="logout"),
+    path("", include("accounts.urls")),
     path("", include("core.urls")),
     path("clients/", include("clients.urls")),
     path("matters/", include("matters.urls")),
@@ -16,5 +18,6 @@ urlpatterns = [
     path("diary/", include("diary.urls")),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+handler403 = "core.views.permission_denied"
+handler404 = "core.views.not_found"
+handler500 = "core.views.server_error"

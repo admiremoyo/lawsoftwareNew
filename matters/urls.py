@@ -10,6 +10,7 @@ urlpatterns = [
     path("<int:pk>/notes/add/", views.add_file_note, name="file_note_add"),
     path("<int:pk>/documents/upload/", views.upload_document, name="document_upload"),
     path("<int:pk>/documents/generate/", views.generate_document, name="document_generate"),
+    path("documents/<int:pk>/download/", views.download_document, name="document_download"),
     path("documents/<int:pk>/delete/", views.delete_document, name="document_delete"),
     path("templates/", views.TemplateList.as_view(), name="template_list"),
     path("templates/new/", views.TemplateCreate.as_view(), name="template_create"),

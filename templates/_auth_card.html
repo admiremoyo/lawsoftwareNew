@@ -1,0 +1,16 @@
+{% load static %}<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}Sign in{% endblock %} · {{ firm.name }}</title>
+<link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/app.css' %}" rel="stylesheet"></head>
+<body class="auth-bg">
+<div class="container" style="max-width: {% block width %}440px{% endblock %}; padding-top: 10vh; padding-bottom: 4rem">
+  <div class="text-center mb-4 text-white"><i class="bi bi-bank2 fs-2"></i><h4 class="mt-2">{{ firm.name }}</h4></div>
+  <div class="card shadow-sm"><div class="card-body p-4">
+    {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">{{ message }}</div>{% endfor %}
+    {% block card %}{% endblock %}
+  </div></div>
+  <p class="text-center small text-white-50 mt-3">LawPractice · secure practice management</p>
+</div>
+</body></html>
