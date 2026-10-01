@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Practice management and trust accounting for law firms: matters, time, fee notes, diary and a trust ledger that never goes into overdraft.">
+<!-- Before publishing: replace the contact details in the #contact section, adjust prices, and
+     rename "LawPractice" if you sell under your own brand. -->
+<title>LawPractice for Law Firms</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Familjen+Grotesk:wght@500;600;700&family=Source+Sans+3:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: ledger-paper page; a hero that shows the trust ledger refusing an overdraft, then plain sections on a 1080px measure. */
+:root {
+  --ink: #1b2540;          /* navy of the app's sidebar */
+  --paper: #f5f7fa;        /* cool, slightly blue neutral */
+  --sheet: #ffffff;
+  --rule: #dfe4ec;
+  --muted: #5b6478;
+  --ledger: #1f7a5a;       /* "balanced" green */
+  --ledger-soft: #e3f2ec;
+  --alert: #b3362d;
+  --alert-soft: #fbe9e7;
+  --accent-fg: #ffffff;
+  --display: "Familjen Grotesk", "Helvetica Neue", Arial, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", Arial, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink: #e6ebf5; --paper: #0f1420; --sheet: #171e2e; --rule: #2a3347; --muted: #9aa4ba;
+    --ledger: #4cc095; --ledger-soft: #15372c; --alert: #f07f74; --alert-soft: #3a1f1d; --accent-fg: #0b1a14;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink: #e6ebf5; --paper: #0f1420; --sheet: #171e2e; --rule: #2a3347; --muted: #9aa4ba;
+  --ledger: #4cc095; --ledger-soft: #15372c; --alert: #f07f74; --alert-soft: #3a1f1d; --accent-fg: #0b1a14;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 17px; line-height: 1.6; padding-inline: 20px; }
+.wrap { max-width: 1080px; margin-inline: auto; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.12; text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(2.3rem, 5vw, 3.6rem); font-weight: 700; }
+h2 { font-size: clamp(1.6rem, 3vw, 2.2rem); font-weight: 650; }
+h3 { font-size: 1.15rem; font-weight: 600; }
+p { margin: 0; }
+a { color: inherit; }
+.eyebrow { font-family: var(--mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--ledger); }
+.muted { color: var(--muted); }
+.btn { display: inline-flex; align-items: center; gap: .5rem; font-family: var(--display); font-weight: 600; font-size: 1rem;
+  padding: .8rem 1.3rem; border-radius: 8px; text-decoration: none; border: 1.5px solid var(--ink); }
+.btn.primary { background: var(--ledger); border-color: var(--ledger); color: var(--accent-fg); }
+.btn:focus-visible, a:focus-visible { outline: 3px solid var(--ledger); outline-offset: 3px; }
+
+/* header */
+header.top { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 22px; flex-wrap: wrap; }
+.brand { font-family: var(--display); font-weight: 700; font-size: 1.25rem; display: flex; align-items: center; gap: .55rem; }
+.brand-mark { width: 26px; height: 26px; border-radius: 6px; background: var(--ink); position: relative; }
+.brand-mark::after { content: ""; position: absolute; inset: 7px 6px; border-top: 2px solid var(--paper); border-bottom: 2px solid var(--paper); }
+nav.links { display: flex; gap: 1.4rem; font-size: .95rem; flex-wrap: wrap; }
+nav.links a { text-decoration: none; color: var(--muted); }
+nav.links a:hover { color: var(--ink); }
+
+/* hero */
+.hero { display: grid; grid-template-columns: 1.05fr 1fr; gap: 48px; align-items: center; padding-block: 40px 72px; }
+.hero > * { min-width: 0; }
+.hero .lede { font-size: 1.2rem; color: var(--muted); margin-top: 18px; max-width: 34em; }
+.hero .ctas { display: flex; gap: 12px; margin-top: 28px; flex-wrap: wrap; }
+.hero .fine { margin-top: 18px; font-size: .9rem; color: var(--muted); }
+
+.ledger { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; font-size: .9rem; }
+.ledger-head { display: flex; justify-content: space-between; gap: 1rem; padding: 14px 18px; border-bottom: 1px solid var(--rule); flex-wrap: wrap; }
+.ledger-head b { font-family: var(--display); }
+.ledger-table { overflow-x: auto; }
+.ledger table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ledger th, .ledger td { padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+.ledger th:first-child, .ledger td:first-child { padding-left: 18px; }
+.ledger th:last-child, .ledger td:last-child { padding-right: 18px; }
+.ledger td.entry { white-space: normal; min-width: 9em; }
+.ledger td.n { font-size: .85rem; }
+.ledger th { font-family: var(--mono); font-size: .72rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 500; }
+.ledger td.n, .ledger th.n { text-align: right; font-family: var(--mono); }
+.refused { margin: 14px 18px; padding: 12px 14px; border-radius: 8px; background: var(--alert-soft); color: var(--alert); font-weight: 600; display: flex; gap: .6rem; }
+.refused small { display: block; font-weight: 400; color: var(--ink); opacity: .85; }
+.balanced { display: flex; justify-content: space-between; gap: 1rem; padding: 12px 18px; background: var(--ledger-soft); font-family: var(--mono); font-size: .8rem; flex-wrap: wrap; }
+.balanced span:last-child { color: var(--ledger); font-weight: 500; }
+
+/* sections */
+section.block { padding-block: 64px; border-top: 1px solid var(--rule); }
+.section-head { max-width: 40em; display: grid; gap: 12px; margin-bottom: 36px; }
+.pains { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; }
+.pains > div { display: grid; gap: 8px; align-content: start; }
+.pains .tag { font-family: var(--mono); font-size: .8rem; color: var(--alert); }
+.features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 12px; overflow: hidden; }
+.features > div { background: var(--sheet); padding: 24px; display: grid; gap: 10px; align-content: start; }
+.features ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: .95rem; }
+.features li + li { margin-top: 4px; }
+.steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; gap: 8px; align-content: start; padding-top: 14px; border-top: 3px solid var(--ink); }
+.steps li::before { content: "Step " counter(step); font-family: var(--mono); font-size: .78rem; color: var(--muted); }
+.plans { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+.plan { background: var(--sheet); border: 1px solid var(--rule); border-radius: 12px; padding: 26px; display: grid; gap: 12px; align-content: start; }
+.plan.featured { border: 2px solid var(--ledger); }
+.price { font-family: var(--display); font-size: 2rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.price small { font-family: var(--body); font-size: .95rem; font-weight: 400; color: var(--muted); }
+.plan ul { margin: 0; padding-left: 1.1em; color: var(--muted); font-size: .95rem; }
+.note { margin-top: 18px; font-size: .9rem; color: var(--muted); }
+.security { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px 40px; }
+.security > div { display: grid; gap: 4px; }
+.contact { background: var(--ink); color: var(--paper); border-radius: 14px; padding: 44px; display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: center; margin-block: 64px; }
+.contact > * { min-width: 0; }
+.contact .muted { color: var(--paper); opacity: .78; }
+.contact dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; font-family: var(--mono); font-size: .95rem; }
+.contact dt { opacity: .7; }
+.contact dd { margin: 0; user-select: all; overflow-wrap: anywhere; }
+footer { padding-block: 28px 48px; font-size: .85rem; color: var(--muted); display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; border-top: 1px solid var(--rule); }
+
+@media (max-width: 860px) {
+  .hero, .contact { grid-template-columns: 1fr; }
+  .pains, .features, .plans { grid-template-columns: 1fr; }
+  .steps { grid-template-columns: 1fr 1fr; }
+  .security { grid-template-columns: 1fr; }
+  .contact { padding: 28px; }
+}
+@media (max-width: 480px) { .steps { grid-template-columns: 1fr; } nav.links { display: none; } }
+@media (prefers-reduced-motion: no-preference) {
+  .refused { animation: nudge .5s ease-out .6s both; }
+  @keyframes nudge { 0% { transform: translateX(0); } 30% { transform: translateX(-5px); } 60% { transform: translateX(4px); } 100% { transform: translateX(0); } }
+}
+</style>
+<style>body { margin: 0; } img { max-width: 100%; }</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"></span>LawPractice</div>
+    <nav class="links" aria-label="Sections">
+      <a href="#features">Features</a><a href="#moving">Moving over</a><a href="#pricing">Pricing</a><a href="#security">Security</a>
+    </nav>
+    <a class="btn" href="#contact">Book a demo</a>
+  </header>
+
+  <section class="hero">
+    <div>
+      <p class="eyebrow">Practice management &amp; trust accounting</p>
+      <h1 style="margin-top:14px">Your trust account, always balanced.</h1>
+      <p class="lede">Matters, time, fee notes, diary and a trust ledger that will not let a client's balance go below zero. One system for the whole firm, in the browser, on any device.</p>
+      <div class="ctas">
+        <a class="btn primary" href="#contact">Book a 30-minute demo</a>
+        <a class="btn" href="#features">See what's included</a>
+      </div>
+      <p class="fine">For small and mid-sized firms · Free data migration from your current system</p>
+    </div>
+
+    <div class="ledger" aria-label="Example of a matter trust ledger">
+      <div class="ledger-head"><b>MAT00042 · Transfer of Stand 1182</b><span class="muted">Trust ledger</span></div>
+      <div class="ledger-table"><table>
+        <thead><tr><th>Date</th><th>Entry</th><th class="n">In</th><th class="n">Out</th><th class="n">Balance</th></tr></thead>
+        <tbody>
+          <tr><td>03 Sep</td><td class="entry">Receipt – purchaser deposit</td><td class="n">8,500.00</td><td class="n"></td><td class="n">8,500.00</td></tr>
+          <tr><td>19 Sep</td><td class="entry">Payment – rates clearance</td><td class="n"></td><td class="n">1,250.00</td><td class="n">7,250.00</td></tr>
+          <tr><td>01 Oct</td><td class="entry">Fees to business – INV00318</td><td class="n"></td><td class="n">1,035.00</td><td class="n">6,215.00</td></tr>
+        </tbody>
+      </table></div>
+      <div class="refused" role="note"><span aria-hidden="true">✕</span><span>Payment of 7,465.00 refused<small>It would overdraw this matter by 1,250.00. Another client's money can't be used.</small></span></div>
+      <div class="balanced"><span>Bank = cash book = matter ledgers</span><span>✓ Reconciled 30 Sep</span></div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="section-head">
+      <p class="eyebrow">Why firms switch</p>
+      <h2>Three problems that cost law firms money and sleep</h2>
+    </div>
+    <div class="pains">
+      <div><span class="tag">Trust risk</span><h3>An overdrawn client ledger is an audit finding</h3><p class="muted">Spreadsheets and general accounting packages let it happen. Here every payment is checked against that matter's balance, mistakes are reversed rather than deleted, and the month-end reconciliation takes minutes.</p></div>
+      <div><span class="tag">Unbilled work</span><h3>Time that's never recorded is never paid</h3><p class="muted">Record time from any device, see work in progress per matter, and turn it into a VAT fee note, emailed as a PDF, in two clicks. Pay it straight from trust when the money is there.</p></div>
+      <div><span class="tag">Missed dates</span><h3>Prescription and court dates don't wait</h3><p class="muted">The dashboard shows today's diary, court dates and deadlines for the next two weeks, overdue checklist steps and claims about to prescribe.</p></div>
+    </div>
+  </section>
+
+  <section class="block" id="features">
+    <div class="section-head">
+      <p class="eyebrow">What's included</p>
+      <h2>Everything a firm runs on, in one place</h2>
+    </div>
+    <div class="features">
+      <div><h3>Clients &amp; matters</h3><ul><li>Automatic client codes and file numbers</li><li>File notes, documents and searchable records</li><li>Precedents that fill in client and matter details</li></ul></div>
+      <div><h3>Checklists &amp; diary</h3><ul><li>Standard steps for conveyancing, estates, litigation, collections and divorce</li><li>Court dates, deadlines, appointments</li><li>Prescription warnings</li></ul></div>
+      <div><h3>Time &amp; billing</h3><ul><li>Time recording at fee earner or matter rates</li><li>Disbursements with or without VAT</li><li>Fee notes as PDF with your letterhead, emailed from the system</li></ul></div>
+      <div><h3>Trust accounting</h3><ul><li>Receipts, payments, transfers and fees to business</li><li>No overdrawn matters, ever</li><li>Three-way bank reconciliation and trust listing</li></ul></div>
+      <div><h3>Business accounts &amp; VAT</h3><ul><li>Office account with expense categories</li><li>VAT report on invoice or payments basis</li><li>Income statement and client statements</li></ul></div>
+      <div><h3>Reports</h3><ul><li>Work in progress and aged debtors</li><li>Fee earner hours and value</li><li>CSV export of every listing</li></ul></div>
+    </div>
+  </section>
+
+  <section class="block" id="moving">
+    <div class="section-head">
+      <p class="eyebrow">Moving over</p>
+      <h2>Live within two weeks, with your trust balances agreed to the bank</h2>
+    </div>
+    <ol class="steps">
+      <li><h3>Import</h3><p class="muted">We bring in your clients and matters from your current system or Excel, checked row by row before anything is saved.</p></li>
+      <li><h3>Agree trust</h3><p class="muted">Opening trust balances per matter are loaded at your last reconciliation date and must agree to the bank before go-live.</p></li>
+      <li><h3>Train</h3><p class="muted">Two short sessions: one for the whole team, one for partners and the bookkeeper.</p></li>
+      <li><h3>Go live</h3><p class="muted">We sit with your bookkeeper through the first month-end reconciliation.</p></li>
+    </ol>
+  </section>
+
+  <section class="block" id="pricing">
+    <div class="section-head">
+      <p class="eyebrow">Pricing</p>
+      <h2>Monthly, per firm. No long contracts.</h2>
+    </div>
+    <div class="plans">
+      <div class="plan"><h3>Solo</h3><div class="price">US$40 <small>/ month</small></div><ul><li>1 user</li><li>Everything included</li><li>Email support</li></ul></div>
+      <div class="plan featured"><h3>Small firm</h3><div class="price">US$99 <small>/ month</small></div><ul><li>Up to 5 users</li><li>Everything included</li><li>Data migration and training</li></ul></div>
+      <div class="plan"><h3>Growing firm</h3><div class="price">US$199 <small>/ month</small></div><ul><li>Up to 15 users</li><li>Everything included</li><li>Priority support</li></ul></div>
+    </div>
+    <p class="note">A once-off setup fee covers your private server, data migration and training. Pay annually and get two months free.</p>
+  </section>
+
+  <section class="block" id="security">
+    <div class="section-head">
+      <p class="eyebrow">Security</p>
+      <h2>Your clients' information stays yours</h2>
+    </div>
+    <div class="security">
+      <div><h3>A private server for your firm</h3><p class="muted">Your data is never stored alongside another firm's.</p></div>
+      <div><h3>Two-factor sign-in</h3><p class="muted">A code from each user's phone, and you can make it compulsory for the whole firm.</p></div>
+      <div><h3>Roles and an audit trail</h3><p class="muted">Secretaries can't post trust entries, and every financial action is logged with who did it and when.</p></div>
+      <div><h3>Encrypted and backed up nightly</h3><p class="muted">HTTPS everywhere, with nightly backups of your records and documents kept off the server.</p></div>
+    </div>
+  </section>
+
+  <section class="contact" id="contact">
+    <div>
+      <h2>See it with your own matters</h2>
+      <p class="muted" style="margin-top:12px">A 30-minute demo, then a 30-day pilot. We'll show you a trust receipt, a refused overdraft, a fee note and a reconciliation.</p>
+    </div>
+    <dl>
+      <dt>Email</dt><dd>demo@yourcompany.com</dd>
+      <dt>Phone</dt><dd>+000 00 000 0000</dd>
+      <dt>WhatsApp</dt><dd>+000 00 000 0000</dd>
+    </dl>
+  </section>
+
+  <footer>
+    <span>© 2026 LawPractice</span>
+    <span>Practice management and trust accounting for law firms</span>
+  </footer>
+</div>
+</body>
+</html>
