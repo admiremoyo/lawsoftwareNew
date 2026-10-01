@@ -1,0 +1,19 @@
+{% load lawtags static %}<!doctype html>
+<html><head><meta charset="utf-8"><title>Trust receipt {{ tx.pk }}</title>
+<link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/app.css' %}" rel="stylesheet"></head>
+<body><div class="print-page">
+  <h4>{{ firm.name }}</h4><div class="small mb-3">{{ firm.address|linebreaksbr }}</div>
+  <h5>TRUST ACCOUNT RECEIPT No. TR{{ tx.pk|stringformat:"06d" }}</h5>
+  <table class="table mt-3">
+    <tr><th>Date</th><td>{{ tx.date|date:"d M Y" }}</td></tr>
+    <tr><th>Received from</th><td>{{ tx.party }}</td></tr>
+    <tr><th>Amount</th><td class="fw-bold">{{ tx.amount|money }}</td></tr>
+    <tr><th>In respect of</th><td>{{ tx.description }}</td></tr>
+    <tr><th>Our ref</th><td>{{ tx.matter.file_number }} – {{ tx.matter.client.name }}</td></tr>
+    {% if tx.reference %}<tr><th>Payment reference</th><td>{{ tx.reference }}</td></tr>{% endif %}
+    <tr><th>Received by</th><td>{{ tx.created_by.get_full_name|default:tx.created_by.username }}</td></tr>
+  </table>
+  <div class="d-print-none"><button class="btn btn-primary" onclick="window.print()">Print</button>
+  <a class="btn btn-link" href="{{ tx.matter.get_absolute_url }}?tab=trust">Back to matter</a></div>
+</div></body></html>

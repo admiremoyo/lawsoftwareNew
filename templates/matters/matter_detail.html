@@ -1,0 +1,130 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}{{ matter.file_number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div>
+    <h4 class="mb-0">{{ matter.file_number }} · {{ matter.description }}</h4>
+    <span class="text-secondary"><a href="{{ matter.client.get_absolute_url }}">{{ matter.client.name }}</a> · {{ matter.get_matter_type_display }} ·
+      <span class="badge {% if matter.status == 'open' %}text-bg-success{% elif matter.status == 'closed' %}text-bg-secondary{% else %}text-bg-warning{% endif %}">{{ matter.get_status_display }}</span></span>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'matter_edit' matter.pk %}">Edit</a>
+    <div class="dropdown"><button class="btn btn-primary dropdown-toggle" data-bs-toggle="dropdown">Actions</button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="{% url 'time_create' %}?matter={{ matter.pk }}">Record time</a></li>
+        <li><a class="dropdown-item" href="{% url 'disbursement_create' %}?matter={{ matter.pk }}">Add disbursement</a></li>
+        <li><a class="dropdown-item" href="{% url 'invoice_create' matter.pk %}">Draft fee note</a></li>
+        <li><a class="dropdown-item" href="{% url 'diary_create' %}?matter={{ matter.pk }}">Add diary entry</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item" href="{% url 'trust_receipt' %}?matter={{ matter.pk }}">Trust receipt</a></li>
+        <li><a class="dropdown-item" href="{% url 'trust_payment' %}?matter={{ matter.pk }}">Trust payment</a></li>
+        <li><a class="dropdown-item" href="{% url 'trust_transfer' %}?matter={{ matter.pk }}">Trust transfer to another matter</a></li>
+      </ul></div>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-3"><div class="card stat"><div class="card-body"><div class="label">Trust balance</div><div class="value">{{ matter.trust_balance|money }}</div></div></div></div>
+  <div class="col-md-3"><div class="card stat"><div class="card-body"><div class="label">Unbilled fees</div><div class="value">{{ matter.unbilled_fees|money }}</div></div></div></div>
+  <div class="col-md-3"><div class="card stat"><div class="card-body"><div class="label">Unbilled disbursements</div><div class="value">{{ matter.unbilled_disbursements|money }}</div></div></div></div>
+  <div class="col-md-3"><div class="card stat"><div class="card-body"><div class="label">Fees outstanding</div><div class="value">{{ matter.outstanding|money }}</div></div></div></div>
+</div>
+
+<ul class="nav nav-tabs">
+  <li class="nav-item"><a class="nav-link {% if tab == 'overview' %}active{% endif %}" href="?tab=overview">Overview</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'notes' %}active{% endif %}" href="?tab=notes">File notes</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'time' %}active{% endif %}" href="?tab=time">Time</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'disbursements' %}active{% endif %}" href="?tab=disbursements">Disbursements</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'invoices' %}active{% endif %}" href="?tab=invoices">Fee notes</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'trust' %}active{% endif %}" href="?tab=trust">Trust ledger</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'documents' %}active{% endif %}" href="?tab=documents">Documents</a></li>
+  <li class="nav-item"><a class="nav-link {% if tab == 'diary' %}active{% endif %}" href="?tab=diary">Diary</a></li>
+</ul>
+<div class="card border-top-0 rounded-top-0"><div class="card-body">
+
+{% if tab == 'overview' %}
+  <div class="row">
+    <div class="col-md-6"><dl>
+      <dt>Responsible attorney</dt><dd>{{ matter.responsible.get_full_name|default:matter.responsible.username }}</dd>
+      <dt>Opened</dt><dd>{{ matter.date_opened|date:"d M Y" }}</dd>
+      {% if matter.date_closed %}<dt>Closed</dt><dd>{{ matter.date_closed|date:"d M Y" }}</dd>{% endif %}
+      <dt>Billing</dt><dd>{{ matter.get_billing_type_display }}{% if matter.billing_type == 'fixed' and matter.fixed_fee %} – {{ matter.fixed_fee|money }}{% endif %}{% if matter.hourly_rate %} · rate {{ matter.hourly_rate|money }}/h{% endif %}</dd>
+      <dt>Prescription date</dt><dd>{{ matter.prescription_date|date:"d M Y"|default:"—" }}</dd>
+    </dl></div>
+    <div class="col-md-6"><dl>
+      <dt>Opposing party</dt><dd>{{ matter.opposing_party|default:"—" }}</dd>
+      <dt>Opposing attorney</dt><dd>{{ matter.opposing_attorney|default:"—" }}</dd>
+      <dt>Court</dt><dd>{{ matter.court|default:"—" }}</dd>
+      <dt>Case number</dt><dd>{{ matter.case_number|default:"—" }}</dd>
+    </dl></div>
+  </div>
+  {% if matter.notes %}<h6>Notes</h6><p>{{ matter.notes|linebreaksbr }}</p>{% endif %}
+
+{% elif tab == 'notes' %}
+  <form method="post" action="{% url 'file_note_add' matter.pk %}" class="mb-4">{% csrf_token %}
+    <div class="row g-2"><div class="col-md-2">{{ note_form.date }}</div><div class="col-md-8">{{ note_form.note }}</div>
+    <div class="col-md-2"><button class="btn btn-primary w-100">Add note</button></div></div></form>
+  {% for n in matter.file_notes.all %}
+    <div class="border-start border-3 ps-3 mb-3"><div class="small text-secondary">{{ n.date|date:"d M Y" }} · {{ n.author.get_full_name|default:n.author.username }}</div>{{ n.note|linebreaksbr }}</div>
+  {% empty %}<p class="text-secondary">No file notes yet.</p>{% endfor %}
+
+{% elif tab == 'time' %}
+  <div class="mb-2"><a class="btn btn-sm btn-primary" href="{% url 'time_create' %}?matter={{ matter.pk }}"><i class="bi bi-plus-lg"></i> Record time</a></div>
+  <table class="table table-sm"><thead><tr><th>Date</th><th>Fee earner</th><th>Description</th><th class="num">Time</th><th class="num">Rate</th><th class="num">Amount</th><th>Billed</th><th></th></tr></thead>
+  <tbody>{% for t in time_entries %}<tr class="{% if not t.billable %}text-secondary{% endif %}"><td>{{ t.date|date:"d M Y" }}</td><td>{{ t.user.get_full_name|default:t.user.username }}</td><td>{{ t.description }}{% if not t.billable %} <span class="badge text-bg-light">non-billable</span>{% endif %}</td>
+    <td class="num">{{ t.minutes|hours }}</td><td class="num">{{ t.rate|money }}</td><td class="num">{{ t.amount|money }}</td>
+    <td>{% if t.invoice %}<a href="{{ t.invoice.get_absolute_url }}">{{ t.invoice.number }}</a>{% endif %}</td>
+    <td class="text-nowrap">{% if not t.invoice %}<a href="{% url 'time_edit' t.pk %}" class="btn btn-sm btn-link p-0">Edit</a>
+      <form method="post" action="{% url 'time_delete' t.pk %}" class="d-inline" onsubmit="return confirm('Delete this time entry?')">{% csrf_token %}<button class="btn btn-sm btn-link text-danger p-0 ms-2">Delete</button></form>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="8" class="text-secondary">No time recorded.</td></tr>{% endfor %}</tbody></table>
+
+{% elif tab == 'disbursements' %}
+  <div class="mb-2"><a class="btn btn-sm btn-primary" href="{% url 'disbursement_create' %}?matter={{ matter.pk }}"><i class="bi bi-plus-lg"></i> Add disbursement</a></div>
+  <table class="table table-sm"><thead><tr><th>Date</th><th>Description</th><th>VAT</th><th class="num">Amount</th><th>Billed</th><th></th></tr></thead>
+  <tbody>{% for d in disbursements %}<tr><td>{{ d.date|date:"d M Y" }}</td><td>{{ d.description }}</td><td>{{ d.vat_applicable|yesno:"Yes,No" }}</td><td class="num">{{ d.amount|money }}</td>
+    <td>{% if d.invoice %}<a href="{{ d.invoice.get_absolute_url }}">{{ d.invoice.number }}</a>{% endif %}</td>
+    <td class="text-nowrap">{% if not d.invoice %}<a href="{% url 'disbursement_edit' d.pk %}" class="btn btn-sm btn-link p-0">Edit</a>
+      <form method="post" action="{% url 'disbursement_delete' d.pk %}" class="d-inline" onsubmit="return confirm('Delete?')">{% csrf_token %}<button class="btn btn-sm btn-link text-danger p-0 ms-2">Delete</button></form>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="6" class="text-secondary">No disbursements.</td></tr>{% endfor %}</tbody></table>
+
+{% elif tab == 'invoices' %}
+  <div class="mb-2"><a class="btn btn-sm btn-primary" href="{% url 'invoice_create' matter.pk %}"><i class="bi bi-plus-lg"></i> Draft fee note</a></div>
+  <table class="table table-sm"><thead><tr><th>Number</th><th>Date</th><th>Status</th><th class="num">Total</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for i in invoices %}<tr><td><a href="{{ i.get_absolute_url }}">{{ i.number }}</a></td><td>{{ i.date|date:"d M Y" }}</td><td>{{ i.get_status_display }}</td><td class="num">{{ i.total|money }}</td><td class="num">{{ i.balance|money }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="text-secondary">No fee notes.</td></tr>{% endfor %}</tbody></table>
+
+{% elif tab == 'trust' %}
+  <div class="mb-2 d-flex gap-2">
+    <a class="btn btn-sm btn-success" href="{% url 'trust_receipt' %}?matter={{ matter.pk }}">Receipt</a>
+    <a class="btn btn-sm btn-warning" href="{% url 'trust_payment' %}?matter={{ matter.pk }}">Payment</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'trust_transfer' %}?matter={{ matter.pk }}">Transfer to matter</a>
+  </div>
+  <table class="table table-sm"><thead><tr><th>Date</th><th>Type</th><th>Party</th><th>Description</th><th>Ref</th><th class="num">In</th><th class="num">Out</th><th class="num">Balance</th><th></th></tr></thead>
+  <tbody>{% for tx, bal in ledger %}<tr><td class="text-nowrap">{{ tx.date|date:"d M Y" }}</td><td>{{ tx.get_type_display }}</td><td>{{ tx.party }}</td><td>{{ tx.description }}{% if tx.invoice %} (<a href="{{ tx.invoice.get_absolute_url }}">{{ tx.invoice.number }}</a>){% endif %}</td><td>{{ tx.reference }}</td>
+    <td class="num">{% if tx.signed_amount > 0 %}{{ tx.signed_amount|money }}{% endif %}</td><td class="num">{% if tx.signed_amount < 0 %}{{ tx.amount|money }}{% endif %}</td><td class="num fw-semibold">{{ bal|money }}</td>
+    <td>{% if tx.type != 'reversal' and not tx.reversed_by %}<a class="btn btn-sm btn-link p-0" href="{% url 'trust_reverse' tx.pk %}">Reverse</a>{% elif tx.reversed_by %}<span class="badge text-bg-light">reversed</span>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="9" class="text-secondary">No trust transactions on this matter.</td></tr>{% endfor %}</tbody></table>
+
+{% elif tab == 'documents' %}
+  <div class="row g-3 mb-3">
+    <div class="col-md-6"><form method="post" enctype="multipart/form-data" action="{% url 'document_upload' matter.pk %}" class="card card-body">{% csrf_token %}
+      <h6>Upload a document</h6>{{ doc_form.title }}<div class="mt-2">{{ doc_form.file }}</div><button class="btn btn-sm btn-primary mt-2">Upload</button></form></div>
+    <div class="col-md-6"><form method="post" action="{% url 'document_generate' matter.pk %}" class="card card-body">{% csrf_token %}
+      <h6>Generate from precedent</h6>{{ generate_form.template }}
+      <div class="form-check mt-2">{{ generate_form.save_to_matter }} <label class="form-check-label" for="{{ generate_form.save_to_matter.id_for_label }}">{{ generate_form.save_to_matter.label }}</label></div>
+      <button class="btn btn-sm btn-primary mt-2">Generate Word document</button></form></div>
+  </div>
+  <table class="table table-sm"><thead><tr><th>Title</th><th>Uploaded</th><th>By</th><th></th></tr></thead>
+  <tbody>{% for d in matter.documents.all %}<tr><td><a href="{{ d.file.url }}" target="_blank">{{ d.title }}</a></td><td>{{ d.uploaded_at|date:"d M Y H:i" }}</td><td>{{ d.uploaded_by }}</td>
+    <td><form method="post" action="{% url 'document_delete' d.pk %}" onsubmit="return confirm('Delete this document?')">{% csrf_token %}<button class="btn btn-sm btn-link text-danger p-0">Delete</button></form></td></tr>
+  {% empty %}<tr><td colspan="4" class="text-secondary">No documents.</td></tr>{% endfor %}</tbody></table>
+
+{% elif tab == 'diary' %}
+  <div class="mb-2"><a class="btn btn-sm btn-primary" href="{% url 'diary_create' %}?matter={{ matter.pk }}"><i class="bi bi-plus-lg"></i> Add diary entry</a></div>
+  <table class="table table-sm"><thead><tr><th>When</th><th>Type</th><th>Title</th><th>Assigned to</th><th>Done</th></tr></thead>
+  <tbody>{% for e in diary %}<tr class="{% if e.completed %}text-secondary{% endif %}"><td>{{ e.start|date:"d M Y H:i" }}</td><td>{{ e.get_entry_type_display }}</td><td><a href="{% url 'diary_edit' e.pk %}">{{ e.title }}</a></td><td>{{ e.assigned_to }}</td><td>{{ e.completed|yesno:"✓," }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="text-secondary">No diary entries.</td></tr>{% endfor %}</tbody></table>
+{% endif %}
+
+</div></div>
+{% endblock %}

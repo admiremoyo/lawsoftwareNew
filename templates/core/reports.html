@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Reports{% endblock %}
+{% block content %}
+<h4 class="mb-3">Reports</h4>
+<div class="row g-3">
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_wip' %}"><h6>Work in progress (WIP)</h6><span class="text-secondary small">Unbilled fees and disbursements per matter.</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_debtors' %}"><h6>Aged debtors</h6><span class="text-secondary small">Outstanding fee notes by client, 30/60/90 days.</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_trust' %}"><h6>Trust balances (trust creditors)</h6><span class="text-secondary small">Money held in trust per matter, at any date.</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_time' %}"><h6>Fee earner time</h6><span class="text-secondary small">Hours and value recorded per fee earner.</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_matters' %}"><h6>Matter listing</h6><span class="text-secondary small">All matters by status, exportable to CSV.</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'trust_reconciliation_list' %}"><h6>Trust reconciliations</h6><span class="text-secondary small">Bank vs cash book vs matter ledgers.</span></a></div>
+</div>
+{% endblock %}

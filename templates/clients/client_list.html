@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Clients{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Clients</h4>
+  <div class="d-flex gap-2"><form><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Filter clients…"></form>
+  <a class="btn btn-primary text-nowrap" href="{% url 'client_create' %}"><i class="bi bi-plus-lg"></i> New client</a></div>
+</div>
+<div class="card"><table class="table table-hover mb-0">
+  <thead><tr><th>Code</th><th>Name</th><th>Type</th><th>Phone</th><th>Email</th><th class="num">Matters</th><th></th></tr></thead>
+  <tbody>{% for c in object_list %}
+    <tr><td><a href="{{ c.get_absolute_url }}">{{ c.code }}</a></td><td>{{ c.name }}</td><td>{{ c.get_client_type_display }}</td><td>{{ c.phone }}</td><td>{{ c.email }}</td><td class="num">{{ c.matter_count }}</td>
+    <td>{% if not c.is_active %}<span class="badge text-bg-secondary">Inactive</span>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="7" class="text-secondary">No clients found.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "_pagination.html" %}
+{% endblock %}

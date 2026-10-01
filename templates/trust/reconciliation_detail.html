@@ -1,0 +1,20 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Reconciliation {{ rec.date }}{% endblock %}
+{% block content %}
+<h4>Trust reconciliation – {{ rec.date|date:"d M Y" }}</h4>
+<div class="card" style="max-width: 640px"><div class="card-body">
+<table class="table">
+  <tr><td>Bank statement balance</td><td class="num">{{ rec.bank_statement_balance|money }}</td></tr>
+  <tr><td>Add: outstanding deposits</td><td class="num">{{ rec.outstanding_deposits|money }}</td></tr>
+  <tr><td>Less: outstanding payments</td><td class="num">({{ rec.outstanding_payments|money }})</td></tr>
+  <tr class="fw-semibold"><td>Adjusted bank balance</td><td class="num">{{ rec.adjusted_bank_balance|money }}</td></tr>
+  <tr><td>Trust cash book balance</td><td class="num">{{ rec.cashbook_balance|money }}</td></tr>
+  <tr><td>Total of matter trust ledgers</td><td class="num">{{ rec.ledger_total|money }}</td></tr>
+  <tr class="fw-bold {% if rec.is_balanced %}text-success{% else %}text-danger{% endif %}"><td>Difference</td><td class="num">{{ rec.difference|money }}</td></tr>
+</table>
+<p>{% if rec.is_balanced %}<span class="badge text-bg-success">Balanced</span>{% else %}<span class="badge text-bg-danger">Not balanced</span>{% endif %}
+ Prepared by {{ rec.prepared_by }} on {{ rec.created_at|date:"d M Y H:i" }}.</p>
+{% if rec.notes %}<p>{{ rec.notes|linebreaksbr }}</p>{% endif %}
+<button class="btn btn-outline-secondary d-print-none" onclick="window.print()">Print</button>
+</div></div>
+{% endblock %}

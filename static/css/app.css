@@ -1,0 +1,24 @@
+:root { --sidebar: #1f2a44; }
+body { background: #f4f6fa; }
+.sidebar { width: 240px; min-height: 100vh; background: var(--sidebar); color: #cfd6e6; flex-shrink: 0; }
+.sidebar .brand { display: block; padding: 1.1rem 1rem; color: #fff; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.08); }
+.sidebar .nav-link { color: #cfd6e6; padding: .45rem 1rem; }
+.sidebar .nav-link i { width: 1.4rem; display: inline-block; }
+.sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.08); }
+.main { min-width: 0; }
+.topbar { display: flex; align-items: center; padding: .6rem 1.5rem; background: #fff; border-bottom: 1px solid #e3e7ef; }
+.card { border: 1px solid #e3e7ef; box-shadow: none; }
+.stat .value { font-size: 1.35rem; font-weight: 600; white-space: nowrap; }
+.stat .label { color: #6c757d; font-size: .85rem; }
+.table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.calendar { table-layout: fixed; }
+.calendar td { width: 14.28%; height: 110px; vertical-align: top; font-size: .8rem; }
+.calendar td.out { background: #f8f9fb; color: #adb5bd; }
+.calendar td.today { background: #eef4ff; }
+.calendar .ev { display: block; padding: 1px 4px; margin-bottom: 2px; border-radius: 3px; background: #e7ecf7; color: #1f2a44; text-decoration: none; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.calendar .ev.court { background: #fde2e1; }
+.calendar .ev.deadline { background: #fff1cc; }
+.calendar .ev.done { text-decoration: line-through; opacity: .6; }
+.print-page { background: #fff; max-width: 800px; margin: 2rem auto; padding: 2.5rem; border: 1px solid #e3e7ef; }
+@media (max-width: 768px) { .sidebar { display: none; } }
+@media print { body { background: #fff; } .print-page { border: 0; margin: 0; padding: 0; max-width: none; } }

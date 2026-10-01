@@ -1,0 +1,71 @@
+{% load static %}<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}{{ firm.name }}{% endblock %} · LawPractice</title>
+  <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+  <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
+  <link href="{% static 'css/app.css' %}" rel="stylesheet">
+</head>
+<body>
+{% if user.is_authenticated %}
+<div class="d-flex">
+  <nav class="sidebar d-print-none">
+    <a class="brand" href="{% url 'dashboard' %}"><i class="bi bi-bank2"></i> {{ firm.name }}</a>
+    {% with p=request.path %}
+    <ul class="nav flex-column">
+      <li><a class="nav-link {% if p == '/' %}active{% endif %}" href="{% url 'dashboard' %}"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
+      <li><a class="nav-link {% if p|slice:':9' == '/clients/' %}active{% endif %}" href="{% url 'client_list' %}"><i class="bi bi-people"></i> Clients</a></li>
+      <li><a class="nav-link {% if p|slice:':9' == '/matters/' %}active{% endif %}" href="{% url 'matter_list' %}"><i class="bi bi-folder2-open"></i> Matters</a></li>
+      <li><a class="nav-link {% if p|slice:':7' == '/diary/' %}active{% endif %}" href="{% url 'diary' %}"><i class="bi bi-calendar3"></i> Diary</a></li>
+      <li><a class="nav-link {% if p|slice:':14' == '/billing/time/' %}active{% endif %}" href="{% url 'time_list' %}"><i class="bi bi-stopwatch"></i> Time recording</a></li>
+      <li><a class="nav-link {% if p|slice:':18' == '/billing/invoices/' %}active{% endif %}" href="{% url 'invoice_list' %}"><i class="bi bi-receipt"></i> Fee notes</a></li>
+      <li><a class="nav-link {% if p|slice:':7' == '/trust/' %}active{% endif %}" href="{% url 'trust_cashbook' %}"><i class="bi bi-safe"></i> Trust account</a></li>
+      <li><a class="nav-link {% if p|slice:':9' == '/reports/' %}active{% endif %}" href="{% url 'reports' %}"><i class="bi bi-bar-chart"></i> Reports</a></li>
+      <li class="mt-3 small text-uppercase text-secondary px-3">Admin</li>
+      <li><a class="nav-link" href="{% url 'template_list' %}"><i class="bi bi-file-earmark-text"></i> Precedents</a></li>
+      <li><a class="nav-link" href="{% url 'firm_settings' %}"><i class="bi bi-gear"></i> Firm settings</a></li>
+      <li><a class="nav-link" href="{% url 'audit_log' %}"><i class="bi bi-journal-check"></i> Audit log</a></li>
+      {% if user.is_staff %}<li><a class="nav-link" href="/admin/auth/user/"><i class="bi bi-person-gear"></i> Users</a></li>{% endif %}
+    </ul>
+    {% endwith %}
+  </nav>
+  <div class="flex-grow-1 main">
+    <header class="topbar d-print-none">
+      <form class="flex-grow-1 me-3" action="{% url 'search' %}">
+        <input class="form-control" name="q" placeholder="Search clients, file numbers, case numbers, fee notes…" value="{{ request.GET.q }}">
+      </form>
+      <div class="dropdown">
+        <button class="btn btn-primary dropdown-toggle me-2" data-bs-toggle="dropdown"><i class="bi bi-plus-lg"></i> New</button>
+        <ul class="dropdown-menu dropdown-menu-end">
+          <li><a class="dropdown-item" href="{% url 'client_create' %}">Client</a></li>
+          <li><a class="dropdown-item" href="{% url 'matter_create' %}">Matter</a></li>
+          <li><a class="dropdown-item" href="{% url 'time_create' %}">Time entry</a></li>
+          <li><a class="dropdown-item" href="{% url 'disbursement_create' %}">Disbursement</a></li>
+          <li><a class="dropdown-item" href="{% url 'diary_create' %}">Diary entry</a></li>
+          <li><hr class="dropdown-divider"></li>
+          <li><a class="dropdown-item" href="{% url 'trust_receipt' %}">Trust receipt</a></li>
+          <li><a class="dropdown-item" href="{% url 'trust_payment' %}">Trust payment</a></li>
+        </ul>
+      </div>
+      <span class="me-2 text-secondary small">{{ user.get_full_name|default:user.username }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Log out</button></form>
+    </header>
+    <main class="p-4">
+      {% for message in messages %}
+        <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
+          {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      {% endfor %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+  {% block public %}{% endblock %}
+{% endif %}
+<script src="{% static 'vendor/bootstrap/bootstrap.bundle.min.js' %}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

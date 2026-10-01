@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Trust reconciliation{% endblock %}
+{% block content %}
+<h4>Trust bank reconciliation</h4>
+<p class="text-secondary">1. Pick the bank statement date. 2. Tick every entry that appears on the statement. 3. Enter the statement's closing balance and save.</p>
+<form method="get" class="d-flex gap-2 mb-3" style="max-width: 360px"><input type="date" class="form-control" name="date" value="{{ as_at|date:'Y-m-d' }}"><button class="btn btn-secondary">Load</button></form>
+<form method="post">{% csrf_token %}
+<input type="hidden" name="date" value="{{ as_at|date:'Y-m-d' }}">
+<div class="card mb-3"><div class="card-header bg-white fw-semibold">Unreconciled cash book entries up to {{ as_at|date:"d M Y" }}</div>
+<table class="table table-sm mb-0">
+  <thead><tr><th style="width:2rem"></th><th>Date</th><th>Matter</th><th>Type</th><th>Party / description</th><th class="num">In</th><th class="num">Out</th></tr></thead>
+  <tbody>{% for tx in items %}<tr><td><input class="form-check-input" type="checkbox" name="cleared" value="{{ tx.pk }}"></td><td>{{ tx.date|date:"d M Y" }}</td><td>{{ tx.matter.file_number }}</td><td>{{ tx.get_type_display }}</td><td>{{ tx.party }} – {{ tx.description }}</td>
+    <td class="num">{% if tx.signed_amount > 0 %}{{ tx.signed_amount|money }}{% endif %}</td><td class="num">{% if tx.signed_amount < 0 %}{{ tx.amount|money }}{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="7" class="text-secondary">Everything is reconciled.</td></tr>{% endfor %}</tbody>
+</table>
+{% if items %}<div class="card-footer bg-white"><button class="btn btn-sm btn-outline-primary" name="tick" value="1">Mark ticked entries as cleared</button></div>{% endif %}
+</div>
+<div class="card" style="max-width: 600px"><div class="card-body">
+  <table class="table table-sm">
+    <tr><td>Cash book balance at {{ as_at|date:"d M Y" }}</td><td class="num">{{ cashbook|money }}</td></tr>
+    <tr><td>Outstanding deposits (not yet on statement)</td><td class="num">{{ deposits|money }}</td></tr>
+    <tr><td>Outstanding payments (not yet on statement)</td><td class="num">{{ payments|money }}</td></tr>
+  </table>
+  <label class="form-label">Bank statement closing balance *</label>{{ form.bank_statement_balance }}
+  {% for e in form.bank_statement_balance.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+  <label class="form-label mt-2">Notes</label>{{ form.notes }}
+  <button class="btn btn-primary mt-3" name="save" value="1">Save reconciliation</button>
+</div></div>
+</form>
+{% endblock %}

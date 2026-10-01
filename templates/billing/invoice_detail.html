@@ -1,0 +1,69 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}{{ invoice.number }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+  <div><h4 class="mb-0">Fee note {{ invoice.number }}
+    <span class="badge {% if invoice.status == 'paid' %}text-bg-success{% elif invoice.status == 'issued' %}text-bg-primary{% elif invoice.status == 'void' %}text-bg-secondary{% else %}text-bg-warning{% endif %}">{{ invoice.get_status_display }}</span></h4>
+    <span class="text-secondary"><a href="{{ invoice.matter.get_absolute_url }}?tab=invoices">{{ invoice.matter }}</a> · {{ invoice.matter.client.name }}</span></div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-outline-secondary" href="{% url 'invoice_print' invoice.pk %}" target="_blank"><i class="bi bi-printer"></i> Print / PDF</a>
+    {% if invoice.status == 'draft' %}
+      <form method="post" action="{% url 'invoice_action' invoice.pk 'issue' %}">{% csrf_token %}<button class="btn btn-primary">Issue fee note</button></form>
+    {% endif %}
+    {% if invoice.status == 'draft' or invoice.status == 'issued' %}
+      <form method="post" action="{% url 'invoice_action' invoice.pk 'void' %}" onsubmit="return confirm('Void this fee note? Its time and disbursements become unbilled again.')">{% csrf_token %}<button class="btn btn-outline-danger">Void</button></form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+<div class="col-lg-8"><div class="card"><div class="card-body">
+  <table class="table table-sm">
+    <thead><tr><th>Date</th><th>Description</th><th class="num">Time</th><th class="num">Amount</th>{% if invoice.status == 'draft' %}<th></th>{% endif %}</tr></thead>
+    <tbody>
+    {% for item in invoice.items.all %}<tr><td></td><td>{{ item.description }}</td><td></td><td class="num">{{ item.amount|money }}</td>
+      {% if invoice.status == 'draft' %}<td>{% include "billing/_remove.html" with kind="item" id=item.pk %}</td>{% endif %}</tr>{% endfor %}
+    {% for t in invoice.time_entries.all %}<tr><td>{{ t.date|date:"d M Y" }}</td><td>{{ t.description }}</td><td class="num">{{ t.minutes|hours }}</td><td class="num">{{ t.amount|money }}</td>
+      {% if invoice.status == 'draft' %}<td>{% include "billing/_remove.html" with kind="time" id=t.pk %}</td>{% endif %}</tr>{% endfor %}
+    <tr class="fw-semibold"><td colspan="3">Fees</td><td class="num">{{ invoice.fees|money }}</td>{% if invoice.status == 'draft' %}<td></td>{% endif %}</tr>
+    {% for d in invoice.disbursements.all %}<tr><td>{{ d.date|date:"d M Y" }}</td><td>{{ d.description }}{% if d.vat_applicable %} *{% endif %}</td><td></td><td class="num">{{ d.amount|money }}</td>
+      {% if invoice.status == 'draft' %}<td>{% include "billing/_remove.html" with kind="disbursement" id=d.pk %}</td>{% endif %}</tr>{% endfor %}
+    {% if invoice.disbursement_total %}<tr class="fw-semibold"><td colspan="3">Disbursements</td><td class="num">{{ invoice.disbursement_total|money }}</td>{% if invoice.status == 'draft' %}<td></td>{% endif %}</tr>{% endif %}
+    <tr><td colspan="3">VAT @ {{ invoice.vat_rate|floatformat:"-2" }}%</td><td class="num">{{ invoice.vat|money }}</td>{% if invoice.status == 'draft' %}<td></td>{% endif %}</tr>
+    <tr class="fw-bold fs-5"><td colspan="3">Total</td><td class="num">{{ invoice.total|money }}</td>{% if invoice.status == 'draft' %}<td></td>{% endif %}</tr>
+    <tr><td colspan="3">Paid</td><td class="num">{{ invoice.paid|money }}</td>{% if invoice.status == 'draft' %}<td></td>{% endif %}</tr>
+    <tr class="fw-bold"><td colspan="3">Balance due</td><td class="num">{{ invoice.balance|money }}</td>{% if invoice.status == 'draft' %}<td></td>{% endif %}</tr>
+    </tbody>
+  </table>
+  {% if invoice.notes %}<p class="text-secondary">{{ invoice.notes|linebreaksbr }}</p>{% endif %}
+</div></div></div>
+
+<div class="col-lg-4">
+  {% if invoice.status == 'draft' %}
+  <div class="card mb-3"><div class="card-body"><h6>Fee note details</h6>
+    <form method="post" action="{% url 'invoice_edit' invoice.pk %}">{% csrf_token %}
+      <label class="form-label small">Date</label>{{ edit_form.date }}
+      <label class="form-label small mt-2">Due date</label>{{ edit_form.due_date }}
+      <label class="form-label small mt-2">Notes</label>{{ edit_form.notes }}
+      <button class="btn btn-sm btn-outline-primary mt-2">Update</button></form></div></div>
+  {% endif %}
+  {% if invoice.status == 'issued' %}
+  <div class="card mb-3"><div class="card-body"><h6>Record payment</h6>
+    <form method="post" action="{% url 'payment_add' invoice.pk %}">{% csrf_token %}
+      <div class="row g-2"><div class="col-6">{{ payment_form.date }}</div><div class="col-6">{{ payment_form.amount }}</div>
+      <div class="col-6">{{ payment_form.method }}</div><div class="col-6">{{ payment_form.reference }}</div></div>
+      <button class="btn btn-sm btn-success mt-2">Record payment</button></form>
+    <hr>
+    <p class="small mb-1">Trust balance on this matter: <strong>{{ trust_balance|money }}</strong></p>
+    {% if trust_balance > 0 %}<a class="btn btn-sm btn-outline-primary" href="{% url 'trust_fee_transfer' invoice.pk %}">Pay from trust</a>{% endif %}
+  </div></div>
+  {% endif %}
+  <div class="card"><div class="card-body"><h6>Payments</h6>
+    {% for p in invoice.payments.all %}
+      <div class="d-flex justify-content-between small border-bottom py-1"><span>{{ p.date|date:"d M Y" }} · {{ p.get_method_display }} {{ p.reference }}</span><span>{{ p.amount|money }}</span></div>
+      <form method="post" action="{% url 'payment_reverse' p.pk %}" class="text-end" onsubmit="this.reason.value = prompt('Reason for reversing this payment?') || ''; return this.reason.value !== '';">{% csrf_token %}<input type="hidden" name="reason"><button class="btn btn-sm btn-link text-danger p-0">Reverse</button></form>
+    {% empty %}<p class="text-secondary small mb-0">No payments.</p>{% endfor %}
+  </div></div>
+</div>
+</div>
+{% endblock %}

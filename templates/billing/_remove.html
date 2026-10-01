@@ -1,0 +1,1 @@
+<form method="post" action="{% url 'invoice_action' invoice.pk 'remove_item' %}">{% csrf_token %}<input type="hidden" name="kind" value="{{ kind }}"><input type="hidden" name="item" value="{{ id }}"><button class="btn btn-sm btn-link text-danger p-0" title="Remove from fee note"><i class="bi bi-x-lg"></i></button></form>

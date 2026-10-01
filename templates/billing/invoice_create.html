@@ -1,0 +1,25 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Draft fee note{% endblock %}
+{% block content %}
+<h4>Draft fee note – {{ matter }}</h4>
+<form method="post" class="card"><div class="card-body">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors|join:" " }}</div>{% endif %}
+  <div class="row g-3 mb-3"><div class="col-md-3"><label class="form-label">Date</label>{{ form.date }}</div></div>
+  <h6>Unbilled time</h6>
+  <table class="table table-sm"><tbody>
+  {% for cb in form.time_entries %}{% with t=cb.data.value.instance %}
+    <tr><td style="width:2rem">{{ cb.tag }}</td><td>{{ t.date|date:"d M Y" }}</td><td>{{ t.user.get_full_name|default:t.user.username }}</td><td>{{ t.description }}</td><td class="num">{{ t.minutes|hours }}</td><td class="num">{{ t.amount|money }}</td></tr>
+  {% endwith %}{% empty %}<tr><td class="text-secondary">No unbilled time.</td></tr>{% endfor %}</tbody></table>
+  <h6>Unbilled disbursements</h6>
+  <table class="table table-sm"><tbody>
+  {% for cb in form.disbursements %}{% with d=cb.data.value.instance %}
+    <tr><td style="width:2rem">{{ cb.tag }}</td><td>{{ d.date|date:"d M Y" }}</td><td>{{ d.description }}</td><td>{% if d.vat_applicable %}VAT{% endif %}</td><td class="num">{{ d.amount|money }}</td></tr>
+  {% endwith %}{% empty %}<tr><td class="text-secondary">No unbilled disbursements.</td></tr>{% endfor %}</tbody></table>
+  <div class="row g-3">
+    <div class="col-md-8"><label class="form-label">{{ form.fixed_fee_description.label }}</label>{{ form.fixed_fee_description }}{{ form.fixed_fee_description.errors }}</div>
+    <div class="col-md-4"><label class="form-label">Amount (excl. VAT)</label>{{ form.fixed_fee_amount }}</div>
+    <div class="col-12"><label class="form-label">Notes on fee note</label>{{ form.notes }}</div>
+  </div>
+  <button class="btn btn-primary mt-3">Create draft</button>
+</div></form>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Fee earner time{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>Fee earner time</h4>
+  <form class="d-flex gap-2"><input type="date" class="form-control form-control-sm" name="start" value="{{ start|date:'Y-m-d' }}"><input type="date" class="form-control form-control-sm" name="end" value="{{ end|date:'Y-m-d' }}"><button class="btn btn-sm btn-secondary">Go</button></form></div>
+<div class="card"><table class="table mb-0">
+  <thead><tr><th>Fee earner</th><th class="num">Hours</th><th class="num">Billable hours</th><th class="num">Value</th><th class="num">Billed</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.user.get_full_name|default:r.user.username }}</td><td class="num">{{ r.minutes|hours }}</td><td class="num">{{ r.billable_minutes|hours }}</td><td class="num">{{ r.amount|money }}</td><td class="num">{{ r.billed|money }}</td></tr>
+  {% empty %}<tr><td colspan="5" class="text-secondary">No time recorded in this period.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

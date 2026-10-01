@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Fee notes{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h4 class="mb-0">Fee notes</h4>
+  <form class="d-flex gap-2"><input class="form-control" name="q" value="{{ request.GET.q }}" placeholder="Number, file or client…">
+    <select class="form-select" name="status" onchange="this.form.submit()"><option value="">All</option>{% for v, l in statuses %}<option value="{{ v }}" {% if request.GET.status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select></form>
+</div>
+<div class="card"><table class="table table-hover mb-0">
+  <thead><tr><th>Number</th><th>Date</th><th>Matter</th><th>Client</th><th>Status</th><th class="num">Total</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for i in object_list %}<tr><td><a href="{{ i.get_absolute_url }}">{{ i.number }}</a></td><td>{{ i.date|date:"d M Y" }}</td><td>{{ i.matter.file_number }}</td><td>{{ i.matter.client.name }}</td>
+    <td><span class="badge {% if i.status == 'paid' %}text-bg-success{% elif i.status == 'issued' %}text-bg-primary{% elif i.status == 'void' %}text-bg-secondary{% else %}text-bg-light{% endif %}">{{ i.get_status_display }}</span></td>
+    <td class="num">{{ i.total|money }}</td><td class="num">{{ i.balance|money }}</td></tr>
+  {% empty %}<tr><td colspan="7" class="text-secondary">No fee notes. Draft one from a matter.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "_pagination.html" %}
+{% endblock %}

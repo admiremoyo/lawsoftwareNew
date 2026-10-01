@@ -1,0 +1,51 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h3 class="mb-4">Good day, {{ user.first_name|default:user.username }}</h3>
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat"><div class="card-body"><div class="label">Open matters</div><div class="value">{{ open_matters }}</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat"><div class="card-body"><div class="label">Active clients</div><div class="value">{{ active_clients }}</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat"><div class="card-body"><div class="label">Held in trust</div><div class="value">{{ trust_total|money }}</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat"><div class="card-body"><div class="label">Debtors outstanding</div><div class="value">{{ debtors_total|money }}</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat"><div class="card-body"><div class="label">My unbilled time</div><div class="value">{{ my_unbilled_amount|money }}</div></div></div></div>
+  <div class="col-6 col-md-4 col-xl-2"><div class="card stat"><div class="card-body"><div class="label">My hours this month</div><div class="value">{{ my_month_minutes|hours }}</div></div></div></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-6">
+    <div class="card mb-3"><div class="card-header bg-white fw-semibold">Today</div>
+      <ul class="list-group list-group-flush">
+      {% for e in today_entries %}
+        <li class="list-group-item"><a href="{% url 'diary_edit' e.pk %}">{{ e.start|time:"H:i" }} · {{ e.title }}</a>
+          {% if e.matter %}<span class="text-secondary small">— <a href="{{ e.matter.get_absolute_url }}">{{ e.matter.file_number }}</a></span>{% endif %}
+          <span class="badge text-bg-light">{{ e.get_entry_type_display }}</span></li>
+      {% empty %}<li class="list-group-item text-secondary">Nothing in the diary today.</li>{% endfor %}
+      </ul></div>
+    <div class="card mb-3"><div class="card-header bg-white fw-semibold">Court dates &amp; deadlines (next 14 days)</div>
+      <ul class="list-group list-group-flush">
+      {% for e in upcoming %}
+        <li class="list-group-item"><strong>{{ e.start|date:"D d M" }}</strong> · <a href="{% url 'diary_edit' e.pk %}">{{ e.title }}</a>
+          {% if e.matter %}<span class="text-secondary small">— {{ e.matter.file_number }}</span>{% endif %}</li>
+      {% empty %}<li class="list-group-item text-secondary">None.</li>{% endfor %}
+      </ul></div>
+    {% if overdue_tasks %}
+    <div class="card mb-3 border-danger"><div class="card-header bg-white fw-semibold text-danger">My overdue items</div>
+      <ul class="list-group list-group-flush">
+      {% for e in overdue_tasks %}<li class="list-group-item">{{ e.start|date:"d M" }} · <a href="{% url 'diary_edit' e.pk %}">{{ e.title }}</a></li>{% endfor %}
+      </ul></div>
+    {% endif %}
+  </div>
+  <div class="col-lg-6">
+    <div class="card mb-3"><div class="card-header bg-white fw-semibold">Prescription warnings (90 days)</div>
+      <ul class="list-group list-group-flush">
+      {% for m in prescribing %}
+        <li class="list-group-item"><span class="{% if m.prescription_date < today %}text-danger{% endif %}">{{ m.prescription_date|date:"d M Y" }}</span> · <a href="{{ m.get_absolute_url }}">{{ m }}</a></li>
+      {% empty %}<li class="list-group-item text-secondary">No claims prescribing soon.</li>{% endfor %}
+      </ul></div>
+    <div class="card"><div class="card-header bg-white fw-semibold">Recently opened matters</div>
+      <ul class="list-group list-group-flush">
+      {% for m in recent_matters %}<li class="list-group-item"><a href="{{ m.get_absolute_url }}">{{ m.file_number }}</a> {{ m.description }} <span class="text-secondary small">— {{ m.client.name }}</span></li>
+      {% empty %}<li class="list-group-item text-secondary">No matters yet. <a href="{% url 'matter_create' %}">Open one</a>.</li>{% endfor %}
+      </ul></div>
+  </div>
+</div>
+{% endblock %}

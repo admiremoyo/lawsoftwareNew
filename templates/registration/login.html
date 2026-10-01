@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block public %}
+<div class="container" style="max-width: 420px; margin-top: 12vh">
+  <div class="card"><div class="card-body p-4">
+    <h4 class="mb-1"><i class="bi bi-bank2"></i> {{ firm.name }}</h4>
+    <p class="text-secondary">Practice management – sign in</p>
+    {% if form.errors %}<div class="alert alert-danger">Incorrect username or password.</div>{% endif %}
+    <form method="post">{% csrf_token %}
+      <div class="mb-3"><label class="form-label">Username</label><input class="form-control" name="username" autofocus required></div>
+      <div class="mb-3"><label class="form-label">Password</label><input class="form-control" type="password" name="password" required></div>
+      <input type="hidden" name="next" value="{{ next }}">
+      <button class="btn btn-primary w-100">Sign in</button>
+    </form>
+  </div></div>
+</div>
+{% endblock %}

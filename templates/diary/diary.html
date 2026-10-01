@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Diary{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div class="d-flex align-items-center gap-2">
+    <a class="btn btn-sm btn-outline-secondary" href="?year={{ prev.year }}&month={{ prev.month }}&user={{ selected_user }}"><i class="bi bi-chevron-left"></i></a>
+    <h4 class="mb-0">{{ first|date:"F Y" }}</h4>
+    <a class="btn btn-sm btn-outline-secondary" href="?year={{ next.year }}&month={{ next.month }}&user={{ selected_user }}"><i class="bi bi-chevron-right"></i></a>
+    <a class="btn btn-sm btn-link" href="?user={{ selected_user }}">Today</a>
+  </div>
+  <div class="d-flex gap-2">
+    <form><input type="hidden" name="year" value="{{ first.year }}"><input type="hidden" name="month" value="{{ first.month }}">
+      <select class="form-select" name="user" onchange="this.form.submit()"><option value="">Everyone</option>
+      {% for u in users %}<option value="{{ u.pk }}" {% if selected_user == u.pk|stringformat:"s" %}selected{% endif %}>{{ u.get_full_name|default:u.username }}</option>{% endfor %}</select></form>
+    <a class="btn btn-primary text-nowrap" href="{% url 'diary_create' %}"><i class="bi bi-plus-lg"></i> New entry</a>
+  </div>
+</div>
+<div class="row g-3">
+<div class="col-xl-9"><div class="card"><table class="table table-bordered calendar mb-0">
+  <thead><tr>{% for d in "MTWTFSS" %}<th class="text-center small">{% cycle "Mon" "Tue" "Wed" "Thu" "Fri" "Sat" "Sun" %}</th>{% endfor %}</tr></thead>
+  <tbody>{% for week in weeks %}<tr>{% for day in week %}
+    <td class="{% if not day.in_month %}out{% endif %} {% if day.date == today %}today{% endif %}">
+      <a class="text-decoration-none text-reset fw-semibold" href="{% url 'diary_create' %}?date={{ day.date|date:'Y-m-d' }}" title="Add entry">{{ day.date.day }}</a>
+      {% for e in day.entries %}<a class="ev {{ e.entry_type }} {% if e.completed %}done{% endif %}" href="{% url 'diary_edit' e.pk %}" title="{{ e.title }}">{{ e.start|time:"H:i" }} {{ e.title }}</a>{% endfor %}
+    </td>{% endfor %}</tr>{% endfor %}</tbody>
+</table></div></div>
+<div class="col-xl-3"><div class="card"><div class="card-header bg-white fw-semibold">Agenda</div>
+  <ul class="list-group list-group-flush">{% for e in agenda %}
+    <li class="list-group-item d-flex justify-content-between align-items-start">
+      <div class="{% if e.completed %}text-decoration-line-through text-secondary{% endif %}"><div class="small text-secondary">{{ e.start|date:"D d M H:i" }} · {{ e.get_entry_type_display }}</div>
+        <a href="{% url 'diary_edit' e.pk %}">{{ e.title }}</a>{% if e.matter %}<div class="small">{{ e.matter.file_number }}</div>{% endif %}</div>
+      <form method="post" action="{% url 'diary_toggle' e.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}">
+        <button class="btn btn-sm {% if e.completed %}btn-success{% else %}btn-outline-success{% endif %}" title="Mark done"><i class="bi bi-check-lg"></i></button></form>
+    </li>{% empty %}<li class="list-group-item text-secondary">Nothing scheduled.</li>{% endfor %}</ul></div></div>
+</div>
+{% endblock %}

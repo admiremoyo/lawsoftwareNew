@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+{% block title %}Search{% endblock %}
+{% block content %}
+<h4>Search results for “{{ q }}”</h4>
+<div class="row g-3 mt-1">
+  <div class="col-md-4"><div class="card"><div class="card-header bg-white">Clients</div><ul class="list-group list-group-flush">
+    {% for c in clients %}<li class="list-group-item"><a href="{{ c.get_absolute_url }}">{{ c }}</a></li>{% empty %}<li class="list-group-item text-secondary">None</li>{% endfor %}</ul></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-header bg-white">Matters</div><ul class="list-group list-group-flush">
+    {% for m in matters %}<li class="list-group-item"><a href="{{ m.get_absolute_url }}">{{ m.file_number }}</a> {{ m.description }}<div class="small text-secondary">{{ m.client.name }}</div></li>{% empty %}<li class="list-group-item text-secondary">None</li>{% endfor %}</ul></div></div>
+  <div class="col-md-4"><div class="card"><div class="card-header bg-white">Fee notes</div><ul class="list-group list-group-flush">
+    {% for i in invoices %}<li class="list-group-item"><a href="{{ i.get_absolute_url }}">{{ i.number }}</a> — {{ i.matter.file_number }}</li>{% empty %}<li class="list-group-item text-secondary">None</li>{% endfor %}</ul></div></div>
+</div>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Trust balances{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>Trust balances as at {{ as_at|date:"d M Y" }}</h4>
+  <form class="d-flex gap-2"><input type="date" class="form-control form-control-sm" name="as_at" value="{{ as_at|date:'Y-m-d' }}"><button class="btn btn-sm btn-secondary">Go</button>
+  <a class="btn btn-outline-secondary btn-sm text-nowrap" href="?as_at={{ as_at|date:'Y-m-d' }}&format=csv">Export CSV</a></form></div>
+<div class="card"><table class="table mb-0">
+  <thead><tr><th>Matter</th><th>Client</th><th class="num">Balance</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td><a href="{{ r.matter.get_absolute_url }}?tab=trust">{{ r.matter.file_number }}</a> {{ r.matter.description }}</td><td>{{ r.matter.client.name }}</td><td class="num {% if r.balance < 0 %}text-danger fw-bold{% endif %}">{{ r.balance|money }}</td></tr>
+  {% empty %}<tr><td colspan="3" class="text-secondary">No money held in trust.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr class="fw-semibold"><td colspan="2">Total of matter ledgers</td><td class="num">{{ total|money }}</td></tr>
+  <tr><td colspan="2">Trust cash book balance</td><td class="num">{{ cashbook|money }}</td></tr></tfoot>
+</table></div>
+{% if total != cashbook %}<div class="alert alert-danger mt-3">Matter ledgers do not agree to the cash book – investigate immediately.</div>{% endif %}
+{% endblock %}

@@ -1,0 +1,27 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}{{ client.name }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <div><h4 class="mb-0">{{ client.name }}</h4><span class="text-secondary">{{ client.code }} · {{ client.get_client_type_display }}</span></div>
+  <div><a class="btn btn-outline-secondary" href="{% url 'client_edit' client.pk %}">Edit</a>
+  <a class="btn btn-primary" href="{% url 'matter_create' %}?client={{ client.pk }}"><i class="bi bi-plus-lg"></i> New matter</a></div>
+</div>
+<div class="row g-3">
+  <div class="col-lg-4"><div class="card"><div class="card-body">
+    <dl class="mb-0">
+      {% if client.contact_person %}<dt>Contact person</dt><dd>{{ client.contact_person }}</dd>{% endif %}
+      <dt>ID / registration</dt><dd>{{ client.id_number|default:"—" }}</dd>
+      <dt>VAT number</dt><dd>{{ client.vat_number|default:"—" }}</dd>
+      <dt>Phone</dt><dd>{{ client.phone|default:"—" }}</dd>
+      <dt>Email</dt><dd>{% if client.email %}<a href="mailto:{{ client.email }}">{{ client.email }}</a>{% else %}—{% endif %}</dd>
+      <dt>Physical address</dt><dd>{{ client.physical_address|linebreaksbr|default:"—" }}</dd>
+      <dt>Postal address</dt><dd>{{ client.postal_address|linebreaksbr|default:"—" }}</dd>
+      {% if client.notes %}<dt>Notes</dt><dd>{{ client.notes|linebreaksbr }}</dd>{% endif %}
+    </dl></div></div></div>
+  <div class="col-lg-8"><div class="card"><div class="card-header bg-white fw-semibold">Matters</div>
+    <table class="table mb-0"><thead><tr><th>File</th><th>Description</th><th>Status</th><th class="num">Trust</th><th class="num">Outstanding</th></tr></thead>
+    <tbody>{% for m in client.matters.all %}<tr><td><a href="{{ m.get_absolute_url }}">{{ m.file_number }}</a></td><td>{{ m.description }}</td><td>{{ m.get_status_display }}</td><td class="num">{{ m.trust_balance|money }}</td><td class="num">{{ m.outstanding|money }}</td></tr>
+    {% empty %}<tr><td colspan="5" class="text-secondary">No matters yet.</td></tr>{% endfor %}</tbody></table>
+  </div></div>
+</div>
+{% endblock %}

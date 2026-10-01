@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Aged debtors{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between mb-3"><h4>Aged debtors as at {{ as_at|date:"d M Y" }}</h4>
+  <form class="d-flex gap-2"><input type="date" class="form-control form-control-sm" name="as_at" value="{{ as_at|date:'Y-m-d' }}"><button class="btn btn-sm btn-secondary">Go</button>
+  <a class="btn btn-outline-secondary btn-sm text-nowrap" href="?as_at={{ as_at|date:'Y-m-d' }}&format=csv">Export CSV</a></form></div>
+<div class="card"><table class="table mb-0">
+  <thead><tr><th>Client</th><th class="num">0–30</th><th class="num">31–60</th><th class="num">61–90</th><th class="num">90+</th><th class="num">Total</th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td><a href="{{ r.client.get_absolute_url }}">{{ r.client.name }}</a></td><td class="num">{{ r.current|money }}</td><td class="num">{{ r.d30|money }}</td><td class="num">{{ r.d60|money }}</td><td class="num text-danger">{{ r.d90|money }}</td><td class="num fw-semibold">{{ r.total|money }}</td></tr>
+  {% empty %}<tr><td colspan="6" class="text-secondary">No outstanding fee notes.</td></tr>{% endfor %}</tbody>
+  <tfoot><tr class="fw-semibold"><td>Total</td><td class="num">{{ totals.current|money }}</td><td class="num">{{ totals.d30|money }}</td><td class="num">{{ totals.d60|money }}</td><td class="num">{{ totals.d90|money }}</td><td class="num">{{ totals.total|money }}</td></tr></tfoot>
+</table></div>
+{% endblock %}
