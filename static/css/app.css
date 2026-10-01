@@ -1,6 +1,7 @@
 :root { --sidebar: #1f2a44; }
 body { background: #f4f6fa; }
-.sidebar { width: 240px; min-height: 100vh; background: var(--sidebar); color: #cfd6e6; flex-shrink: 0; }
+.sidebar { width: 240px; min-height: 100vh; background: var(--sidebar); color: #cfd6e6; flex-shrink: 0; --bs-offcanvas-bg: var(--sidebar); --bs-offcanvas-width: 260px; }
+.sidebar.offcanvas-md { overflow-y: auto; }
 .sidebar .brand { display: block; padding: 1.1rem 1rem; color: #fff; font-weight: 600; text-decoration: none; border-bottom: 1px solid rgba(255,255,255,.08); }
 .sidebar .nav-link { color: #cfd6e6; padding: .45rem 1rem; }
 .sidebar .nav-link i { width: 1.4rem; display: inline-block; }
@@ -20,6 +21,6 @@ body { background: #f4f6fa; }
 .calendar .ev.deadline { background: #fff1cc; }
 .calendar .ev.done { text-decoration: line-through; opacity: .6; }
 .print-page { background: #fff; max-width: 800px; margin: 2rem auto; padding: 2.5rem; border: 1px solid #e3e7ef; }
-@media (max-width: 768px) { .sidebar { display: none; } }
+@media (max-width: 767.98px) { .topbar { padding: .5rem .75rem; } .main .table { font-size: .875rem; } .main .card { overflow-x: auto; } }
 @media print { body { background: #fff; } .print-page { border: 0; margin: 0; padding: 0; max-width: none; } }
 .auth-bg { background: linear-gradient(160deg, #1f2a44, #34507f); min-height: 100vh; }

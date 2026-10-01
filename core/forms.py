@@ -40,6 +40,16 @@ class FirmSettingsForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = FirmSettings
         fields = "__all__"
+        widgets = {"logo": forms.ClearableFileInput(attrs={"accept": "image/png,image/jpeg"})}
+
+    def clean_logo(self):
+        logo = self.cleaned_data.get("logo")
+        if logo and hasattr(logo, "content_type"):
+            if logo.content_type not in ("image/png", "image/jpeg"):
+                raise forms.ValidationError("Upload a PNG or JPG image.")
+            if logo.size > 2 * 1024 * 1024:
+                raise forms.ValidationError("The logo must be smaller than 2 MB.")
+        return logo
 
 
 class EmailDocumentForm(StyledFormMixin, forms.Form):

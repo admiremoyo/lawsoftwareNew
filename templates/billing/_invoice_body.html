@@ -1,6 +1,6 @@
 {% load lawtags %}
 <div class="d-flex justify-content-between">
-    <div><h3 class="mb-1">{{ firm.name }}</h3><div class="small">{{ firm.address|linebreaksbr }}<br>{{ firm.phone }} · {{ firm.email }}{% if firm.vat_number %}<br>VAT no. {{ firm.vat_number }}{% endif %}</div></div>
+    <div>{% if firm.logo %}<img src="{% url 'firm_logo' %}" alt="" style="max-height:60px" class="mb-2"><br>{% endif %}<h3 class="mb-1">{{ firm.name }}</h3><div class="small">{{ firm.address|linebreaksbr }}<br>{{ firm.phone }} · {{ firm.email }}{% if firm.vat_number %}<br>VAT no. {{ firm.vat_number }}{% endif %}</div></div>
     <div class="text-end"><h4>{% if invoice.status == 'draft' %}DRAFT {% endif %}TAX INVOICE</h4>
       <div>No. <strong>{{ invoice.number }}</strong></div><div>Date: {{ invoice.date|date:"d M Y" }}</div><div>Due: {{ invoice.due_date|date:"d M Y" }}</div></div>
   </div>

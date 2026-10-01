@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.db.models import Q, Sum
-from django.http import HttpResponse, JsonResponse
+from django.http import FileResponse, Http404, HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
 
@@ -19,6 +19,14 @@ from trust.models import TrustTransaction
 
 from .forms import FirmSettingsForm
 from .models import AuditLog, FirmSettings
+
+
+def firm_logo(request):
+    """The firm logo (uploads are never served publicly)."""
+    firm = FirmSettings.load()
+    if not firm.logo:
+        raise Http404
+    return FileResponse(firm.logo.open("rb"))
 
 
 def health(request):
@@ -102,7 +110,7 @@ def search(request):
 @require_perm("firm_settings")
 def firm_settings(request):
     obj = FirmSettings.load()
-    form = FirmSettingsForm(request.POST or None, instance=obj)
+    form = FirmSettingsForm(request.POST or None, request.FILES or None, instance=obj)
     if request.method == "POST" and form.is_valid():
         form.save()
         AuditLog.record(request.user, "update", obj, "Firm settings updated")

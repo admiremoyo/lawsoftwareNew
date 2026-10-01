@@ -197,6 +197,7 @@ class PasswordResetView(auth_views.PasswordResetView):
     template_name = "accounts/password_reset.html"
     email_template_name = "accounts/password_reset_email.txt"
     subject_template_name = "accounts/password_reset_subject.txt"
+    extra_email_context = {"product_name": settings.PRODUCT_NAME}
     MAX_PER_HOUR = 5
 
     def form_valid(self, form):

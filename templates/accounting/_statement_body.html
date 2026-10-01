@@ -1,6 +1,6 @@
 {% load lawtags %}
 <div style="display:flex; justify-content:space-between">
-  <div><h3 style="margin:0">{{ firm.name }}</h3><div style="font-size:13px">{{ firm.address|linebreaksbr }}<br>{{ firm.phone }} {{ firm.email }}</div></div>
+  <div>{% if firm.logo %}<img src="{% url 'firm_logo' %}" alt="" style="max-height:60px"><br>{% endif %}<h3 style="margin:0">{{ firm.name }}</h3><div style="font-size:13px">{{ firm.address|linebreaksbr }}<br>{{ firm.phone }} {{ firm.email }}</div></div>
   <div style="text-align:right"><h4 style="margin:0">STATEMENT OF ACCOUNT</h4><div>Date: {{ today|date:"d M Y" }}</div></div>
 </div>
 <hr>

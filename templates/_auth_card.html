@@ -11,6 +11,6 @@
     {% for message in messages %}<div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %}">{{ message }}</div>{% endfor %}
     {% block card %}{% endblock %}
   </div></div>
-  <p class="text-center small text-white-50 mt-3">LawPractice · secure practice management</p>
+  <p class="text-center small text-white-50 mt-3">{{ product_name }} · secure practice management</p>
 </div>
 </body></html>

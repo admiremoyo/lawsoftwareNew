@@ -8,6 +8,7 @@ class FirmSettings(models.Model):
     """Single-row table holding firm-wide configuration."""
 
     name = models.CharField(max_length=200, default="My Law Firm")
+    logo = models.ImageField(upload_to="firm/", blank=True, help_text="Printed on fee notes and statements (PNG or JPG).")
     address = models.TextField(blank=True)
     phone = models.CharField(max_length=50, blank=True)
     email = models.EmailField(blank=True)

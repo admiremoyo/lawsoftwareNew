@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}{{ firm.name }}{% endblock %} · LawPractice</title>
+  <title>{% block title %}{{ firm.name }}{% endblock %} · {{ product_name }}</title>
   <link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
   <link href="{% static 'vendor/bootstrap-icons/bootstrap-icons.min.css' %}" rel="stylesheet">
   <link href="{% static 'css/app.css' %}" rel="stylesheet">
@@ -11,7 +11,7 @@
 <body>
 {% if user.is_authenticated %}
 <div class="d-flex">
-  <nav class="sidebar d-print-none">
+  <nav class="sidebar offcanvas-md offcanvas-start d-print-none" tabindex="-1" id="sidebar">
     <a class="brand" href="{% url 'dashboard' %}"><i class="bi bi-bank2"></i> {{ firm.name }}</a>
     {% with p=request.path %}
     <ul class="nav flex-column">
@@ -37,11 +37,12 @@
   </nav>
   <div class="flex-grow-1 main">
     <header class="topbar d-print-none">
+      <button class="btn btn-outline-secondary d-md-none me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#sidebar" aria-label="Menu"><i class="bi bi-list"></i></button>
       <form class="flex-grow-1 me-3" action="{% url 'search' %}">
         <input class="form-control" name="q" placeholder="Search clients, file numbers, case numbers, fee notes…" value="{{ request.GET.q }}">
       </form>
       <div class="dropdown">
-        <button class="btn btn-primary dropdown-toggle me-2" data-bs-toggle="dropdown"><i class="bi bi-plus-lg"></i> New</button>
+        <button class="btn btn-primary dropdown-toggle me-2" data-bs-toggle="dropdown"><i class="bi bi-plus-lg"></i><span class="d-none d-sm-inline"> New</span></button>
         <ul class="dropdown-menu dropdown-menu-end">
           <li><a class="dropdown-item" href="{% url 'client_create' %}">Client</a></li>
           <li><a class="dropdown-item" href="{% url 'matter_create' %}">Matter</a></li>
@@ -53,10 +54,10 @@
           <li><a class="dropdown-item" href="{% url 'trust_payment' %}">Trust payment</a></li>{% endif %}
         </ul>
       </div>
-      <a class="me-2 text-secondary small text-decoration-none text-nowrap" href="{% url 'my_account' %}"><i class="bi bi-person-circle"></i> {{ user.get_full_name|default:user.username }}</a>
-      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary">Log out</button></form>
+      <a class="me-2 text-secondary small text-decoration-none text-nowrap" href="{% url 'my_account' %}" title="My account"><i class="bi bi-person-circle"></i> <span class="d-none d-lg-inline">{{ user.get_full_name|default:user.username }}</span></a>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button class="btn btn-sm btn-outline-secondary text-nowrap">Log out</button></form>
     </header>
-    <main class="p-4">
+    <main class="p-3 p-md-4">
       {% for message in messages %}
         <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show">
           {{ message }}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>

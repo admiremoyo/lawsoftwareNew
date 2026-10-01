@@ -114,3 +114,46 @@ class InterestTests(TestCase):
         result = resp.context["result"]
         self.assertTrue(result["capped"])
         self.assertEqual(result["total"], Decimal("2000"))
+
+
+class BrandingTests(TestCase):
+    def test_logo_upload_and_pdf(self):
+        import io
+        import shutil
+        import tempfile
+
+        from django.test import override_settings
+        from PIL import Image
+
+        from billing.models import Invoice
+        from core.models import FirmSettings
+
+        media = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, media, ignore_errors=True)
+        with override_settings(MEDIA_ROOT=media):
+            user = partner()
+            self.client.force_login(user)
+            buf = io.BytesIO()
+            Image.new("RGB", (120, 40), (31, 42, 68)).save(buf, "PNG")
+            data = {f.name: getattr(FirmSettings.load(), f.name) for f in FirmSettings._meta.fields
+                    if f.name not in ("id", "logo")}
+            data["logo"] = SimpleUploadedFile("logo.png", buf.getvalue(), "image/png")
+            resp = self.client.post(reverse("firm_settings"), {k: v for k, v in data.items() if v is not False})
+            self.assertRedirects(resp, reverse("firm_settings"))
+            self.assertTrue(FirmSettings.load().logo)
+            self.assertEqual(self.client.get(reverse("firm_logo")).status_code, 200)
+            matter = Matter.objects.create(client=Client.objects.create(name="A"), description="M",
+                                           responsible=user, date_opened=date(2026, 10, 1))
+            invoice = Invoice.objects.create(matter=matter, created_by=user)
+            resp = self.client.get(reverse("invoice_pdf", args=[invoice.pk]))
+            self.assertTrue(resp.content.startswith(b"%PDF"))
+            self.assertIn(b"/Image", resp.content)
+
+    def test_logo_rejects_non_images(self):
+        self.client.force_login(partner())
+        resp = self.client.post(reverse("firm_settings"), {
+            "name": "X", "currency_symbol": "$", "vat_rate": "15", "default_hourly_rate": "100",
+            "matter_prefix": "M", "client_prefix": "C", "invoice_prefix": "I", "invoice_due_days": "30",
+            "logo": SimpleUploadedFile("logo.png", b"<script>", "text/html"),
+        })
+        self.assertEqual(resp.status_code, 200)

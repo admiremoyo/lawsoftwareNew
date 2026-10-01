@@ -26,6 +26,8 @@ def env_list(name, default=""):
 
 
 DEBUG = env_bool("DJANGO_DEBUG", True)
+# The name of the software shown to users; set PRODUCT_NAME to sell it under your own brand.
+PRODUCT_NAME = env("PRODUCT_NAME", "LawPractice")
 INSECURE_DEV_KEY = "dev-insecure-change-me"
 SECRET_KEY = env("DJANGO_SECRET_KEY", INSECURE_DEV_KEY)
 if not DEBUG and (SECRET_KEY == INSECURE_DEV_KEY or len(SECRET_KEY) < 40):

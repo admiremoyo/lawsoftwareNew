@@ -6,6 +6,7 @@ urlpatterns = [
     path("", views.dashboard, name="dashboard"),
     path("search/", views.search, name="search"),
     path("settings/", views.firm_settings, name="firm_settings"),
+    path("settings/logo/", views.firm_logo, name="firm_logo"),
     path("audit/", views.audit_log, name="audit_log"),
     path("import/", views.data_import, name="data_import"),
     path("import/template/<str:kind>/", views.import_template, name="import_template"),
