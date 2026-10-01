@@ -16,6 +16,7 @@ urlpatterns = [
     path("billing/", include("billing.urls")),
     path("trust/", include("trust.urls")),
     path("diary/", include("diary.urls")),
+    path("accounting/", include("accounting.urls")),
 ]
 
 handler403 = "core.views.permission_denied"

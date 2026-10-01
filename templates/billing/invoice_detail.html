@@ -6,7 +6,9 @@
     <span class="badge {% if invoice.status == 'paid' %}text-bg-success{% elif invoice.status == 'issued' %}text-bg-primary{% elif invoice.status == 'void' %}text-bg-secondary{% else %}text-bg-warning{% endif %}">{{ invoice.get_status_display }}</span></h4>
     <span class="text-secondary"><a href="{{ invoice.matter.get_absolute_url }}?tab=invoices">{{ invoice.matter }}</a> · {{ invoice.matter.client.name }}</span></div>
   <div class="d-flex gap-2">
-    <a class="btn btn-outline-secondary" href="{% url 'invoice_print' invoice.pk %}" target="_blank"><i class="bi bi-printer"></i> Print / PDF</a>
+    <a class="btn btn-outline-secondary" href="{% url 'invoice_pdf' invoice.pk %}" target="_blank"><i class="bi bi-file-earmark-pdf"></i> PDF</a>
+    <a class="btn btn-outline-secondary" href="{% url 'invoice_print' invoice.pk %}" target="_blank"><i class="bi bi-printer"></i> Print</a>
+    {% if invoice.status == 'issued' or invoice.status == 'paid' %}{% if can.invoice_issue %}<a class="btn btn-outline-primary" href="{% url 'invoice_email' invoice.pk %}"><i class="bi bi-envelope"></i> Email</a>{% endif %}{% endif %}
     {% if invoice.status == 'draft' and can.invoice_issue %}
       <form method="post" action="{% url 'invoice_action' invoice.pk 'issue' %}">{% csrf_token %}<button class="btn btn-primary">Issue fee note</button></form>
     {% endif %}

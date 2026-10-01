@@ -80,8 +80,12 @@ class Invoice(models.Model):
         return (base * self.vat_rate / Decimal("100")).quantize(CENT, rounding=ROUND_HALF_UP)
 
     @property
+    def fees_and_disbursements_excl_vat(self):
+        return self.fees + self.disbursement_total
+
+    @property
     def total(self):
-        return self.fees + self.disbursement_total + self.vat
+        return self.fees_and_disbursements_excl_vat + self.vat
 
     @property
     def paid(self):

@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}Income statement{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="mb-0">Income statement</h4>
+  <form class="d-flex gap-2 align-items-center d-print-none">
+    <input type="date" class="form-control form-control-sm" style="width:auto" name="start" value="{{ start|date:'Y-m-d' }}">
+    <span class="small text-secondary">to</span>
+    <input type="date" class="form-control form-control-sm" style="width:auto" name="end" value="{{ end|date:'Y-m-d' }}">
+    <button class="btn btn-sm btn-secondary">Go</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">Print</button>
+  </form>
+</div>
+<div class="card" style="max-width: 760px"><div class="card-body">
+  <p class="text-secondary">{{ firm.name }} · {{ start|date:"d M Y" }} – {{ end|date:"d M Y" }} · amounts exclude VAT</p>
+  <table class="table table-sm">
+    <tr class="table-light fw-semibold"><td colspan="2">Income</td></tr>
+    <tr><td>Professional fees ({{ invoice_count }} fee notes)</td><td class="num">{{ fees|money }}</td></tr>
+    <tr><td>Disbursements recovered from clients</td><td class="num">{{ disbursements_recovered|money }}</td></tr>
+    {% for cat, amount in other_income %}<tr><td>{{ cat.name }}</td><td class="num">{{ amount|money }}</td></tr>{% endfor %}
+    <tr class="fw-semibold"><td>Total income</td><td class="num">{{ total_income|money }}</td></tr>
+    <tr class="table-light fw-semibold"><td colspan="2">Expenses</td></tr>
+    {% for cat, amount in expenses %}<tr><td>{{ cat.name }}</td><td class="num">{{ amount|money }}</td></tr>
+    {% empty %}<tr><td colspan="2" class="text-secondary">No expenses recorded.</td></tr>{% endfor %}
+    <tr class="fw-semibold"><td>Total expenses</td><td class="num">{{ total_expenses|money }}</td></tr>
+    <tr class="fw-bold fs-5 {% if profit < 0 %}text-danger{% endif %}"><td>Net {% if profit >= 0 %}profit{% else %}loss{% endif %}</td><td class="num">{{ profit|money }}</td></tr>
+  </table>
+  <p class="small text-secondary mb-0">Fees are recognised when fee notes are issued. "Drawings" are included as an expense category for convenience; your accountant may treat them separately.</p>
+</div></div>
+{% endblock %}

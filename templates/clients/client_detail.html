@@ -3,7 +3,8 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <div><h4 class="mb-0">{{ client.name }}</h4><span class="text-secondary">{{ client.code }} · {{ client.get_client_type_display }}</span></div>
-  <div><a class="btn btn-outline-secondary" href="{% url 'client_edit' client.pk %}">Edit</a>
+  <div><a class="btn btn-outline-secondary" href="{% url 'client_statement' client.pk %}"><i class="bi bi-file-earmark-text"></i> Statement</a>
+  <a class="btn btn-outline-secondary" href="{% url 'client_edit' client.pk %}">Edit</a>
   <a class="btn btn-primary" href="{% url 'matter_create' %}?client={{ client.pk }}"><i class="bi bi-plus-lg"></i> New matter</a></div>
 </div>
 <div class="row g-3">

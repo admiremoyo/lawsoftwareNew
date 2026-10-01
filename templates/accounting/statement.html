@@ -1,0 +1,13 @@
+{% load lawtags static %}<!doctype html>
+<html><head><meta charset="utf-8"><title>Statement – {{ client.name }}</title>
+<link href="{% static 'vendor/bootstrap/bootstrap.min.css' %}" rel="stylesheet">
+<link href="{% static 'css/app.css' %}" rel="stylesheet"></head>
+<body><div class="print-page">
+  {% include "accounting/_statement_body.html" %}
+  <div class="d-print-none mt-4 d-flex gap-2">
+    <button class="btn btn-primary" onclick="window.print()">Print / Save as PDF</button>
+    <a class="btn btn-outline-primary" href="?{{ request.GET.urlencode }}&format=pdf">PDF</a>
+    <a class="btn btn-outline-primary" href="{% url 'email_statement' client.pk %}?{{ request.GET.urlencode }}">Email to client</a>
+    <a class="btn btn-link" href="{{ client.get_absolute_url }}">Back to client</a>
+  </div>
+</div></body></html>

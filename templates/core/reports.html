@@ -3,11 +3,17 @@
 {% block content %}
 <h4 class="mb-3">Reports</h4>
 <div class="row g-3">
-  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_wip' %}"><h6>Work in progress (WIP)</h6><span class="text-secondary small">Unbilled fees and disbursements per matter.</span></a></div>
-  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_debtors' %}"><h6>Aged debtors</h6><span class="text-secondary small">Outstanding fee notes by client, 30/60/90 days.</span></a></div>
-  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_trust' %}"><h6>Trust balances (trust creditors)</h6><span class="text-secondary small">Money held in trust per matter, at any date.</span></a></div>
-  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_time' %}"><h6>Fee earner time</h6><span class="text-secondary small">Hours and value recorded per fee earner.</span></a></div>
+  {% if can.financial_reports %}<div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_wip' %}"><h6>Work in progress (WIP)</h6><span class="text-secondary small">Unbilled fees and disbursements per matter.</span></a></div>{% endif %}
+  {% if can.financial_reports %}<div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_debtors' %}"><h6>Aged debtors</h6><span class="text-secondary small">Outstanding fee notes by client, 30/60/90 days.</span></a></div>{% endif %}
+  {% if can.trust_view %}<div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_trust' %}"><h6>Trust balances (trust creditors)</h6><span class="text-secondary small">Money held in trust per matter, at any date.</span></a></div>{% endif %}
+  {% if can.financial_reports %}<div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_time' %}"><h6>Fee earner time</h6><span class="text-secondary small">Hours and value recorded per fee earner.</span></a></div>{% endif %}
   <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'report_matters' %}"><h6>Matter listing</h6><span class="text-secondary small">All matters by status, exportable to CSV.</span></a></div>
-  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'trust_reconciliation_list' %}"><h6>Trust reconciliations</h6><span class="text-secondary small">Bank vs cash book vs matter ledgers.</span></a></div>
+  {% if can.trust_view %}<div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'trust_reconciliation_list' %}"><h6>Trust reconciliations</h6><span class="text-secondary small">Bank vs cash book vs matter ledgers.</span></a></div>{% endif %}
+  {% if can.accounting %}
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'vat_report' %}"><h6>VAT report</h6><span class="text-secondary small">Output vs input VAT for your VAT return (invoice or payments basis).</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'income_statement' %}"><h6>Income statement</h6><span class="text-secondary small">Fees, other income and expenses – profit for the period.</span></a></div>
+  <div class="col-md-4"><a class="card card-body text-decoration-none" href="{% url 'business_cashbook' %}"><h6>Business cash book</h6><span class="text-secondary small">Office account receipts and expenses, CSV export.</span></a></div>
+  {% endif %}
 </div>
+<p class="text-secondary small mt-3">Client statements of account are on each client's page.</p>
 {% endblock %}

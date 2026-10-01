@@ -1,0 +1,25 @@
+{% load lawtags %}
+<div class="d-flex justify-content-between">
+    <div><h3 class="mb-1">{{ firm.name }}</h3><div class="small">{{ firm.address|linebreaksbr }}<br>{{ firm.phone }} · {{ firm.email }}{% if firm.vat_number %}<br>VAT no. {{ firm.vat_number }}{% endif %}</div></div>
+    <div class="text-end"><h4>{% if invoice.status == 'draft' %}DRAFT {% endif %}TAX INVOICE</h4>
+      <div>No. <strong>{{ invoice.number }}</strong></div><div>Date: {{ invoice.date|date:"d M Y" }}</div><div>Due: {{ invoice.due_date|date:"d M Y" }}</div></div>
+  </div>
+  <hr>
+  <div class="row"><div class="col-6"><strong>To:</strong><br>{{ invoice.matter.client.name }}<br>{{ invoice.matter.client.postal_address|default:invoice.matter.client.physical_address|linebreaksbr }}{% if invoice.matter.client.vat_number %}<br>VAT no. {{ invoice.matter.client.vat_number }}{% endif %}</div>
+    <div class="col-6 text-end"><strong>Our ref:</strong> {{ invoice.matter.file_number }}<br><strong>Re:</strong> {{ invoice.matter.description }}</div></div>
+  <table class="table table-sm mt-4">
+    <thead><tr><th>Date</th><th>Description</th><th class="num">Amount</th></tr></thead>
+    <tbody>
+    {% for item in invoice.items.all %}<tr><td></td><td>{{ item.description }}</td><td class="num">{{ item.amount|money }}</td></tr>{% endfor %}
+    {% for t in invoice.time_entries.all %}<tr><td>{{ t.date|date:"d/m/Y" }}</td><td>{{ t.description }} ({{ t.minutes|hours }})</td><td class="num">{{ t.amount|money }}</td></tr>{% endfor %}
+    <tr class="fw-semibold"><td></td><td>Total fees</td><td class="num">{{ invoice.fees|money }}</td></tr>
+    {% for d in invoice.disbursements.all %}<tr><td>{{ d.date|date:"d/m/Y" }}</td><td>{{ d.description }}{% if d.vat_applicable %} *{% endif %}</td><td class="num">{{ d.amount|money }}</td></tr>{% endfor %}
+    {% if invoice.disbursement_total %}<tr class="fw-semibold"><td></td><td>Total disbursements</td><td class="num">{{ invoice.disbursement_total|money }}</td></tr>{% endif %}
+    <tr><td></td><td>VAT @ {{ invoice.vat_rate|floatformat:"-2" }}%</td><td class="num">{{ invoice.vat|money }}</td></tr>
+    <tr class="fw-bold"><td></td><td>TOTAL</td><td class="num">{{ invoice.total|money }}</td></tr>
+    {% if invoice.paid %}<tr><td></td><td>Less paid</td><td class="num">{{ invoice.paid|money }}</td></tr>
+    <tr class="fw-bold"><td></td><td>BALANCE DUE</td><td class="num">{{ invoice.balance|money }}</td></tr>{% endif %}
+    </tbody></table>
+  {% if invoice.vatable_disbursements %}<p class="small">* VAT charged on this disbursement.</p>{% endif %}
+  {% if invoice.notes %}<p>{{ invoice.notes|linebreaksbr }}</p>{% endif %}
+  {% if firm.business_bank_details %}<p class="small"><strong>Banking details:</strong><br>{{ firm.business_bank_details|linebreaksbr }}</p>{% endif %}

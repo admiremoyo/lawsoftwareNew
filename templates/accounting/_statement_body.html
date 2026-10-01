@@ -1,0 +1,21 @@
+{% load lawtags %}
+<div style="display:flex; justify-content:space-between">
+  <div><h3 style="margin:0">{{ firm.name }}</h3><div style="font-size:13px">{{ firm.address|linebreaksbr }}<br>{{ firm.phone }} {{ firm.email }}</div></div>
+  <div style="text-align:right"><h4 style="margin:0">STATEMENT OF ACCOUNT</h4><div>Date: {{ today|date:"d M Y" }}</div></div>
+</div>
+<hr>
+<p><strong>{{ client.name }}</strong><br>{{ client.postal_address|default:client.physical_address|linebreaksbr }}<br>
+Client code: {{ client.code }}{% if matter %}<br>Matter: {{ matter.file_number }} – {{ matter.description }}{% endif %}</p>
+<table class="table table-sm" style="width:100%; border-collapse:collapse; font-size:13px">
+  <thead><tr><th style="text-align:left">Date</th><th style="text-align:left">Reference</th><th style="text-align:left">Description</th><th style="text-align:right">Debit</th><th style="text-align:right">Credit</th><th style="text-align:right">Balance</th></tr></thead>
+  <tbody>
+  {% if start %}<tr><td colspan="5">Balance brought forward</td><td style="text-align:right">{{ opening|money }}</td></tr>{% endif %}
+  {% for l in lines %}<tr><td>{{ l.date|date:"d M Y" }}</td><td>{{ l.ref }}</td><td>{{ l.description }}</td>
+    <td style="text-align:right">{% if l.debit %}{{ l.debit|money }}{% endif %}</td><td style="text-align:right">{% if l.credit %}{{ l.credit|money }}{% endif %}</td><td style="text-align:right">{{ l.balance|money }}</td></tr>
+  {% empty %}<tr><td colspan="6">No fee notes or payments.</td></tr>{% endfor %}
+  <tr style="font-weight:bold"><td colspan="5">Amount due</td><td style="text-align:right">{{ closing|money }}</td></tr>
+  </tbody>
+</table>
+{% if trust %}<p style="font-size:13px"><strong>Funds held in our trust account on your behalf:</strong><br>
+{% for m, bal in trust %}{{ m.file_number }} – {{ m.description }}: {{ bal|money }}<br>{% endfor %}</p>{% endif %}
+{% if firm.business_bank_details %}<p style="font-size:13px"><strong>Banking details for payment:</strong><br>{{ firm.business_bank_details|linebreaksbr }}</p>{% endif %}

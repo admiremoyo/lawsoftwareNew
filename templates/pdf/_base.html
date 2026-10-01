@@ -1,0 +1,21 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  @page { size: a4 portrait; margin: 1.6cm 1.5cm 1.8cm 1.5cm;
+          @frame footer { -pdf-frame-content: footer; bottom: 0.6cm; margin-left: 1.5cm; margin-right: 1.5cm; height: 0.8cm; } }
+  body { font-family: Helvetica; font-size: 9.5pt; color: #222; }
+  h1 { font-size: 16pt; margin: 0; color: #1f2a44; }
+  h2 { font-size: 13pt; margin: 0; color: #1f2a44; }
+  .muted { color: #666; font-size: 8.5pt; }
+  table.lines { width: 100%; margin-top: 10pt; }
+  table.lines th { background: #1f2a44; color: #fff; padding: 4pt; text-align: left; font-size: 8.5pt; }
+  table.lines td { padding: 3pt 4pt; border-bottom: 0.5pt solid #ddd; vertical-align: top; }
+  .num, table.lines th.num, table.lines td.num { text-align: right; }
+  .total td { font-weight: bold; border-top: 1pt solid #1f2a44; }
+  .grand td { font-weight: bold; font-size: 11pt; background: #eef1f7; }
+  .box { border: 0.5pt solid #ccc; padding: 6pt; }
+</style></head>
+<body>
+{% block body %}{% endblock %}
+<div id="footer" class="muted" style="text-align:center">{{ firm.name }}{% if firm.vat_number %} · VAT no. {{ firm.vat_number }}{% endif %} · {{ firm.phone }} · {{ firm.email }}</div>
+</body></html>

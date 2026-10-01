@@ -7,7 +7,11 @@ from django.utils import timezone
 from django.views.generic import ListView
 
 from accounts.permissions import PERMISSIONS, has_perm, require_perm
-from core.models import AuditLog
+from core.emailing import EmailFailed, send_document
+from core.forms import EmailDocumentForm
+from core.models import AuditLog, FirmSettings
+from core.pdf import pdf_response, render_pdf
+from core.templatetags.lawtags import money
 from matters.models import Matter
 
 from .forms import DisbursementForm, InvoiceCreateForm, InvoiceEditForm, PaymentForm, TimeEntryForm
@@ -243,3 +247,44 @@ def payment_add(request, pk):
             for error in errors:
                 messages.error(request, error)
     return redirect(invoice)
+
+
+def invoice_pdf(request, pk):
+    invoice = get_object_or_404(Invoice.objects.select_related("matter__client"), pk=pk)
+    return pdf_response("pdf/invoice.html", {"invoice": invoice, "firm": FirmSettings.load()}, f"{invoice.number}.pdf",
+                        inline=request.GET.get("download") != "1")
+
+
+@require_perm("invoice_issue")
+def invoice_email(request, pk):
+    invoice = get_object_or_404(Invoice.objects.select_related("matter__client"), pk=pk)
+    if invoice.status not in ("issued", "paid"):
+        messages.error(request, "Issue the fee note before emailing it.")
+        return redirect(invoice)
+    firm = FirmSettings.load()
+    client = invoice.matter.client
+    initial = {
+        "to": client.email,
+        "subject": f"Fee note {invoice.number} – {invoice.matter.description}",
+        "message": (
+            f"Dear {client.contact_person or client.name}\n\n"
+            f"Please find attached our fee note {invoice.number} for {money(invoice.total)} "
+            f"in respect of {invoice.matter.description} (our ref {invoice.matter.file_number}).\n\n"
+            f"Payment is due by {invoice.due_date:%d %B %Y}. Please use {invoice.number} as your payment reference.\n\n"
+            f"Kind regards\n{request.user.get_full_name()}\n{firm.name}"
+        ),
+    }
+    form = EmailDocumentForm(request.POST or None, initial=initial)
+    if request.method == "POST" and form.is_valid():
+        data = form.cleaned_data
+        pdf = render_pdf("pdf/invoice.html", {"invoice": invoice, "firm": firm})
+        try:
+            send_document(user=request.user, to=data["to"], subject=data["subject"], body=data["message"],
+                          filename=f"{invoice.number}.pdf", pdf_bytes=pdf, obj=invoice)
+        except EmailFailed as exc:
+            form.add_error(None, f"The email could not be sent: {exc}. Check the email settings.")
+        else:
+            messages.success(request, f"{invoice.number} emailed to {data['to']}.")
+            return redirect(invoice)
+    return render(request, "form.html", {"form": form, "title": f"Email {invoice.number}",
+                                         "intro": f"The fee note is attached as {invoice.number}.pdf."})

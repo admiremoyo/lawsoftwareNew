@@ -141,6 +141,25 @@ class Command(BaseCommand):
             "basis on which our fees will be charged.\n\n...\n\nYours faithfully\n{{ author }}"
         ))
 
+        from accounting.models import BusinessTransaction, Category, vat_from_gross
+
+        for days, cat, party, desc, amount, vat in [
+            (60, "Rent", "City Properties", "Office rent", "1150.00", True),
+            (30, "Rent", "City Properties", "Office rent", "1150.00", True),
+            (25, "Salaries and wages", "Staff", "Salaries", "3200.00", False),
+            (12, "Telephone and internet", "Telco", "Internet and phones", "230.00", True),
+            (5, "Stationery and printing", "Office Mart", "Paper and toner", "115.00", True),
+        ]:
+            BusinessTransaction.objects.create(
+                date=today - timedelta(days=days), type="payment", category=Category.objects.get(name=cat),
+                party=party, description=desc, amount=Decimal(amount),
+                vat_amount=vat_from_gross(Decimal(amount), firm.vat_rate) if vat else Decimal("0"), created_by=admin,
+            )
+        BusinessTransaction.objects.create(
+            date=today - timedelta(days=74), type="receipt", category=Category.objects.get(name="Capital introduced"),
+            party="Partners", description="Opening capital", amount=Decimal("10000"), created_by=admin,
+        )
+
         self.stdout.write(self.style.SUCCESS(
             "Demo data created. Log in as admin / demo-admin-2026 (partner) or associate / demo-associate-2026."
         ))

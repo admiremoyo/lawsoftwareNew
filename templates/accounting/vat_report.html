@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load lawtags %}
+{% block title %}VAT report{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+  <h4 class="mb-0">VAT report</h4>
+  <form class="d-flex gap-2 align-items-center flex-wrap d-print-none">
+    <input type="date" class="form-control form-control-sm" style="width:auto" name="start" value="{{ start|date:'Y-m-d' }}">
+    <span class="small text-secondary">to</span>
+    <input type="date" class="form-control form-control-sm" style="width:auto" name="end" value="{{ end|date:'Y-m-d' }}">
+    <select name="basis" class="form-select form-select-sm" style="width:auto">
+      <option value="invoice" {% if basis == 'invoice' %}selected{% endif %}>Invoice basis</option>
+      <option value="payments" {% if basis == 'payments' %}selected{% endif %}>Payments (cash) basis</option></select>
+    <button class="btn btn-sm btn-secondary">Go</button>
+    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="window.print()">Print</button>
+  </form>
+</div>
+<p class="text-secondary">{{ start|date:"d M Y" }} – {{ end|date:"d M Y" }} · {% if basis == 'payments' %}output VAT on payments received{% else %}output VAT on fee notes issued{% endif %}</p>
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="card stat"><div class="card-body"><div class="label">Output VAT (charged to clients)</div><div class="value">{{ output_vat|money }}</div><div class="small text-secondary">{{ output_count }} {% if basis == 'payments' %}payments{% else %}fee notes{% endif %}</div></div></div></div>
+  <div class="col-md-4"><div class="card stat"><div class="card-body"><div class="label">Input VAT (on expenses)</div><div class="value">{{ input_vat|money }}</div><div class="small text-secondary">{{ expenses|length }} expenses</div></div></div></div>
+  <div class="col-md-4"><div class="card stat border-primary"><div class="card-body"><div class="label">{% if net >= 0 %}VAT payable{% else %}VAT refundable{% endif %}</div><div class="value">{{ net|money }}</div></div></div></div>
+</div>
+{% if invoices %}
+<h6>Fee notes issued</h6>
+<div class="card mb-4"><table class="table table-sm mb-0"><thead><tr><th>Date</th><th>Number</th><th>Client</th><th class="num">Excl. VAT</th><th class="num">VAT</th><th class="num">Total</th></tr></thead>
+<tbody>{% for i in invoices %}<tr><td>{{ i.date|date:"d M Y" }}</td><td><a href="{{ i.get_absolute_url }}">{{ i.number }}</a></td><td>{{ i.matter.client.name }}</td><td class="num">{{ i.fees_and_disbursements_excl_vat|money }}</td><td class="num">{{ i.vat|money }}</td><td class="num">{{ i.total|money }}</td></tr>{% endfor %}</tbody></table></div>
+{% endif %}
+<h6>Expenses with VAT</h6>
+<div class="card"><table class="table table-sm mb-0"><thead><tr><th>Date</th><th>Supplier</th><th>Description</th><th>Category</th><th class="num">Amount</th><th class="num">VAT</th></tr></thead>
+<tbody>{% for e in expenses %}<tr><td>{{ e.date|date:"d M Y" }}</td><td>{{ e.party }}</td><td>{{ e.description }}</td><td>{{ e.category.name }}</td><td class="num">{{ e.amount|money }}</td><td class="num">{{ e.vat_amount|money }}</td></tr>
+{% empty %}<tr><td colspan="6" class="text-secondary">No expenses with VAT in this period.</td></tr>{% endfor %}</tbody></table></div>
+{% endblock %}

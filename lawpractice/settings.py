@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "trust",
     "diary",
     "accounts",
+    "accounting",
 ]
 
 MIDDLEWARE = [
@@ -175,3 +176,9 @@ LOGGING = {
     "root": {"handlers": ["console"], "level": env("LOG_LEVEL", "INFO")},
     "loggers": {"django.request": {"handlers": ["console"], "level": "WARNING", "propagate": False}},
 }
+
+if "test" in __import__("sys").argv:
+    # Keep test output readable: expected 403/404 responses are logged as warnings otherwise.
+    LOGGING["loggers"]["django.request"]["level"] = "ERROR"
+    LOGGING["root"]["level"] = "ERROR"
+    PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]  # fast tests only

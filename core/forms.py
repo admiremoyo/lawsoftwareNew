@@ -40,3 +40,9 @@ class FirmSettingsForm(StyledFormMixin, forms.ModelForm):
     class Meta:
         model = FirmSettings
         fields = "__all__"
+
+
+class EmailDocumentForm(StyledFormMixin, forms.Form):
+    to = forms.EmailField(label="To")
+    subject = forms.CharField(max_length=200)
+    message = forms.CharField(widget=forms.Textarea(attrs={"rows": 8}))
