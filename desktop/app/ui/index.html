@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LawPractice</title>
+  <link rel="stylesheet" href="launcher.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="brand">
+      <span class="mark" aria-hidden="true"></span>
+      <div>
+        <h1>LawPractice</h1>
+        <p>Practice management and trust accounting</p>
+      </div>
+    </header>
+
+    <section class="choices" aria-label="How do you want to work?">
+      <article class="choice" id="local-card">
+        <h2>On this computer</h2>
+        <p>Everything is stored on this PC and works without internet. Best for a sole practitioner or a single office computer.</p>
+        <ul>
+          <li>Automatic daily backups</li>
+          <li>No server to set up</li>
+        </ul>
+        <button id="open-local" class="primary" type="button">Open on this computer</button>
+        <p class="small" id="local-note"></p>
+      </article>
+
+      <article class="choice">
+        <h2>Connect to my firm's server</h2>
+        <p>Your firm's LawPractice is hosted online and shared by everyone in the office. Enter the address your administrator gave you.</p>
+        <form id="server-form" novalidate>
+          <label for="server-url">Firm address</label>
+          <input id="server-url" type="text" inputmode="url" placeholder="smithlaw.example.com" autocomplete="url" spellcheck="false">
+          <button class="secondary" type="submit">Connect</button>
+        </form>
+      </article>
+    </section>
+
+    <label class="remember"><input type="checkbox" id="remember" checked> Open this way automatically next time</label>
+    <p class="status" id="status" role="status" aria-live="polite"></p>
+    <footer class="foot" id="foot"></footer>
+  </main>
+  <script src="launcher.js"></script>
+</body>
+</html>

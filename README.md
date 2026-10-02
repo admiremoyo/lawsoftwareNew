@@ -2,10 +2,12 @@
 
 A complete, browser-based system for running a law firm: clients and matters, checklists, diary, time
 recording, fee notes, **trust accounting that can never be overdrawn**, business accounts and VAT, and
-the reports partners and auditors ask for. Each firm runs on its own private server.
+the reports partners and auditors ask for. Each firm runs on its own private server, or entirely on
+one Windows PC with the desktop app.
 
 | Guide | For |
 | --- | --- |
+| [docs/DESKTOP.md](docs/DESKTOP.md) | The Windows desktop app: works offline on one PC, or connects to a firm server |
 | [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Setting up a firm's server (Docker, HTTPS, email, backups, updates) |
 | [docs/ONBOARDING.md](docs/ONBOARDING.md) | Taking a new client firm live: data migration, trust opening balances, training |
 | [docs/USER_GUIDE.md](docs/USER_GUIDE.md) | Day-to-day use by the firm's staff |
@@ -52,6 +54,14 @@ the reports partners and auditors ask for. Each firm runs on its own private ser
 - CSV import of clients and matters (with trust opening balances) for moving from another system
 - First-run setup wizard; firm logo, VAT rate, currency and numbering configurable; product name
   configurable for selling under your own brand; works on phones and tablets
+
+## Desktop app (Windows)
+
+A Tauri v2 app built automatically by GitHub Actions; download it from the
+[latest-desktop release](https://github.com/admiremoyo/lawsoftwareNew/releases/tag/latest-desktop).
+**On this computer** runs everything on one PC with no internet needed, with daily backups and
+backup/restore to USB. **Connect to my firm's server** opens the firm's hosted LawPractice in a proper
+Windows app. See [docs/DESKTOP.md](docs/DESKTOP.md).
 
 ## Quick start (local demo)
 
@@ -100,6 +110,7 @@ diary/       diary / calendar
 matters/     matters, file notes, documents, precedents, workflows & checklists
 trust/       trust cash book, services.py (all trust rules), reconciliation
 deploy/      entrypoint, Caddyfile, backup / restore scripts
+desktop/     Windows desktop app: Tauri v2 shell (app/) and the bundled local server (backend/)
 templates/   HTML and PDF templates (Bootstrap 5 bundled locally – no internet needed)
 ```
 

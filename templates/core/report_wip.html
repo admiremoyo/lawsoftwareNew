@@ -4,7 +4,7 @@
 <div class="d-flex justify-content-between mb-3"><h4>Work in progress</h4><a class="btn btn-outline-secondary btn-sm" href="?format=csv">Export CSV</a></div>
 <div class="card"><table class="table mb-0">
   <thead><tr><th>Matter</th><th>Client</th><th>Responsible</th><th class="num">Fees</th><th class="num">Disbursements</th><th class="num">Total</th><th></th></tr></thead>
-  <tbody>{% for r in rows %}<tr><td><a href="{{ r.matter.get_absolute_url }}">{{ r.matter.file_number }}</a> {{ r.matter.description }}</td><td>{{ r.matter.client.name }}</td><td>{{ r.matter.responsible }}</td>
+  <tbody>{% for r in rows %}<tr><td><a href="{{ r.matter.get_absolute_url }}">{{ r.matter.file_number }}</a> {{ r.matter.description }}</td><td>{{ r.matter.client.name }}</td><td>{{ r.matter.responsible.get_full_name|default:r.matter.responsible.username }}</td>
     <td class="num">{{ r.fees|money }}</td><td class="num">{{ r.disbursements|money }}</td><td class="num fw-semibold">{{ r.total|money }}</td>
     <td><a class="btn btn-sm btn-outline-primary" href="{% url 'invoice_create' r.matter.pk %}">Bill</a></td></tr>
   {% empty %}<tr><td colspan="7" class="text-secondary">No unbilled work.</td></tr>{% endfor %}</tbody>

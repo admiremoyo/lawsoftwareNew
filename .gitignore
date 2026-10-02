@@ -8,3 +8,10 @@ venv/
 .env
 node_modules/
 backups/
+desktop/backend/dist/
+desktop/backend/build/
+desktop/app/src-tauri/target/
+desktop/app/src-tauri/gen/
+desktop/app/src-tauri/resources/server/*
+!desktop/app/src-tauri/resources/server/.gitkeep
+desktop/app/node_modules/

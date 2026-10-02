@@ -6,7 +6,7 @@
   <a class="btn btn-outline-secondary btn-sm text-nowrap" href="?status={{ status }}&format=csv">Export CSV</a></form></div>
 <div class="card"><table class="table mb-0">
   <thead><tr><th>File</th><th>Client</th><th>Description</th><th>Type</th><th>Status</th><th>Responsible</th><th>Opened</th></tr></thead>
-  <tbody>{% for m in matters %}<tr><td><a href="{{ m.get_absolute_url }}">{{ m.file_number }}</a></td><td>{{ m.client.name }}</td><td>{{ m.description }}</td><td>{{ m.get_matter_type_display }}</td><td>{{ m.get_status_display }}</td><td>{{ m.responsible }}</td><td>{{ m.date_opened|date:"d M Y" }}</td></tr>
+  <tbody>{% for m in matters %}<tr><td><a href="{{ m.get_absolute_url }}">{{ m.file_number }}</a></td><td>{{ m.client.name }}</td><td>{{ m.description }}</td><td>{{ m.get_matter_type_display }}</td><td>{{ m.get_status_display }}</td><td>{{ m.responsible.get_full_name|default:m.responsible.username }}</td><td>{{ m.date_opened|date:"d M Y" }}</td></tr>
   {% empty %}<tr><td colspan="7" class="text-secondary">No matters.</td></tr>{% endfor %}</tbody>
 </table></div>
 {% endblock %}

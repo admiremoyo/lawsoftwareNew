@@ -1,0 +1,123 @@
+name: Desktop app
+
+# Builds the Windows installer (like the School Management desktop app): the Django backend is
+# frozen with PyInstaller and shipped inside a Tauri v2 app, so a firm can run LawPractice on one
+# PC without a server. The installer is published to the "latest-desktop" GitHub release.
+on:
+  push:
+    branches: [main, claude/eager-ritchie-tdtv0d]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check-linux:
+    name: Check desktop shell (Linux)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install native build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libxdo-dev libssl-dev
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/app/src-tauri
+      - name: Compile and test
+        working-directory: desktop/app/src-tauri
+        run: |
+          cargo check
+          cargo test
+
+  build-windows:
+    name: Build Windows installer
+    needs: check-linux
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Run the test suite
+        run: python manage.py test
+
+      - name: Collect static files
+        env:
+          DJANGO_DEBUG: "0"
+          DJANGO_SECRET_KEY: build-only-build-only-build-only-build-only-key
+        run: python manage.py collectstatic --noinput
+
+      - name: Freeze the backend
+        run: pyinstaller --noconfirm --distpath desktop/backend/dist --workpath desktop/backend/build desktop/backend/lawpractice-server.spec
+
+      - name: Smoke-test the frozen backend
+        shell: bash
+        run: |
+          SERVER=desktop/backend/dist/lawpractice-server/lawpractice-server.exe
+          DATA="$RUNNER_TEMP/lp-data"
+          "$SERVER" manage --data "$DATA" migrate --noinput
+          "$SERVER" manage --data "$DATA" check
+          "$SERVER" backup --data "$DATA"
+
+      - name: Bundle the backend into the app
+        shell: bash
+        run: cp -r desktop/backend/dist/lawpractice-server/. desktop/app/src-tauri/resources/server/
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: desktop/app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: desktop/app/src-tauri
+
+      - name: Build installer
+        working-directory: desktop/app
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: lawpractice-desktop-windows
+          path: |
+            desktop/app/src-tauri/target/release/bundle/nsis/*.exe
+            desktop/app/src-tauri/target/release/bundle/msi/*.msi
+          retention-days: 30
+
+      - name: Publish to the latest-desktop release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FILES=()
+          for f in desktop/app/src-tauri/target/release/bundle/nsis/*.exe desktop/app/src-tauri/target/release/bundle/msi/*.msi; do
+            [ -f "$f" ] && FILES+=("$f")
+          done
+          if [ ${#FILES[@]} -eq 0 ]; then echo "No installers found" >&2; exit 1; fi
+          gh release delete latest-desktop --yes --cleanup-tag || true
+          gh release create latest-desktop "${FILES[@]}" --prerelease \
+            --title "LawPractice Desktop – latest build (run #${{ github.run_number }})" \
+            --notes "Windows installer built from ${{ github.sha }} on ${{ github.ref_name }}. Use the -setup.exe for most PCs; the .msi is for IT-managed deployment."
+
+      - name: Summary
+        shell: bash
+        run: echo "Download the installer from https://github.com/${{ github.repository }}/releases/tag/latest-desktop" >> "$GITHUB_STEP_SUMMARY"

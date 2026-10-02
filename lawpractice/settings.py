@@ -26,6 +26,8 @@ def env_list(name, default=""):
 
 
 DEBUG = env_bool("DJANGO_DEBUG", True)
+# Set by the desktop app: the server runs on this computer only (127.0.0.1, plain HTTP).
+DESKTOP_MODE = env_bool("LAWPRACTICE_DESKTOP", False)
 # The name of the software shown to users; set PRODUCT_NAME to sell it under your own brand.
 PRODUCT_NAME = env("PRODUCT_NAME", "LawPractice")
 INSECURE_DEV_KEY = "dev-insecure-change-me"
@@ -160,7 +162,7 @@ DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", "LawPractice <no-reply@localhost>
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 ADMINS = [("Admin", a) for a in env_list("DJANGO_ADMIN_EMAILS")]
 
-if not DEBUG:
+if not DEBUG and not DESKTOP_MODE:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     SECURE_SSL_REDIRECT = env_bool("DJANGO_SSL_REDIRECT", True)
     SECURE_REDIRECT_EXEMPT = [r"^health/$"]
@@ -171,6 +173,11 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF = True
     SECURE_REFERRER_POLICY = "same-origin"
     X_FRAME_OPTIONS = "DENY"
+if DESKTOP_MODE:
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = "same-origin"
+    X_FRAME_OPTIONS = "DENY"
+    SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # the app window is the "browser"
 
 LOGGING = {
     "version": 1,
